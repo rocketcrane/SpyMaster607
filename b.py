@@ -22,6 +22,7 @@ import pyaudio
 import pydub
 import wave
 import time
+import math
 import multiprocessing
 from ctypes import c_char_p
 from ctypes import c_uint8
@@ -62,16 +63,44 @@ def list_input_device(p):
 		# print(deviceInfo)
 
 def remap_range(value, left_min, left_max, right_min, right_max):
-		# this remaps a value from original (left) range to new (right) range
-		# Figure out how 'wide' each range is
-		left_span = left_max - left_min
-		right_span = right_max - right_min
-		
-		# Convert the left range into a 0-1 range (int)
-		valueScaled = int(value - left_min) / int(left_span)
-		
-		# Convert the 0-1 range into a value in the right range.
-		return int(right_min + (valueScaled * right_span))
+	# this remaps a value from original (left) range to new (right) range
+	# Figure out how 'wide' each range is
+	left_span = left_max - left_min
+	right_span = right_max - right_min
+	
+	# Convert the left range into a 0-1 range (int)
+	valueScaled = int(value - left_min) / int(left_span)
+	
+	# Convert the 0-1 range into a value in the right range.
+	return int(right_min + (valueScaled * right_span))
+
+def remap_range_logarithmic(value, left_min, left_max, right_min, right_max):
+   """Remaps a value from an original (left) range to a new (right) range logarithmically.
+
+   Args:
+	   value: The value to remap.
+	   left_min: The minimum value of the left range.
+	   left_max: The maximum value of the left range.
+	   right_min: The minimum value of the right range.
+	   right_max: The maximum value of the right range.
+
+   Returns:
+	   The remapped value within the right range.
+   """
+
+   # Handle zero in the left range to avoid division by zero
+   if left_min == 0:
+	   left_min = 1e-9  # Adjust slightly to avoid log(0)
+
+   # Calculate logarithmic scaling factors
+   left_log_span = math.log10(left_max / left_min)
+   right_log_span = math.log10(right_max / right_min)
+
+   # Remap value logarithmically
+   value_log = math.log10(value / left_min) / left_log_span
+   value_scaled = right_min * math.pow(10, value_log * right_log_span)
+
+   return value_scaled
 		
 def record(transcription):
 	# recording config
@@ -248,7 +277,7 @@ def sensors(inputs):
 				inputs[7] = 1
 				
 				# convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
-				inputs[3] = remap_range(trim_pot, 0, 65535, 0, 100)
+				inputs[3] = remap_range_logarithmic(trim_pot, 0, 65535, 0, 100)
 				# set OS volume playback volume
 				# print('Volume = {volume}%' .format(volume = inputs[3]))
 				#set_vol_cmd = 'sudo amixer cset numid=1 -- {volume}% > /dev/null' \
@@ -260,8 +289,13 @@ def sensors(inputs):
 			pass
 # --------------------------------------------------------------------------------
 
-# startup pyAudio
-audio = pyaudio.PyAudio()
+# only run PyAudio if we need it
+AUDIO = False
+#AUDIO = True
+
+if AUDIO:
+	# startup pyAudio
+	audio = pyaudio.PyAudio()
 
 if __name__ == '__main__':
 	# start transcription with current time
