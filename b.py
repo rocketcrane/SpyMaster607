@@ -292,6 +292,10 @@ if __name__ == '__main__':
 	sensing.start()
 	
 	while True:
+		# tts initialization
+		engine = pyttsx3.init()
+		engine.setProperty('rate', 100)    # Speed percent (can go over 100)
+		
 		# vol switch has changed
 		if inputs[4] == 1:
 			cachedInputs = inputs #cache the inputs to make sure they don't change
@@ -301,9 +305,6 @@ if __name__ == '__main__':
 			
 			if cachedInputs[0] == 1:
 				spyMasterChannel = int(random.random()*100)
-				# tts initialization
-				engine = pyttsx3.init()
-				engine.setProperty('rate', 100)    # Speed percent (can go over 100)
 				
 				# SPEAK THE RESPONSE
 				engine.say(str("Connect to HQ at "+str(spyMasterChannel)))
