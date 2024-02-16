@@ -238,7 +238,7 @@ if __name__ == '__main__':
 	transcription = manager.Value(c_char_p, str(datetime.now()))
 	
 	# set up the prompt
-	prompt = manager.Value(c_char_p, transcription.value))
+	prompt = manager.Value(c_char_p, transcription.value)
 	response = manager.Value(c_char_p, str())
 	
 	# set the buttons and volume
