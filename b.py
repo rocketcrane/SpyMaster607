@@ -82,7 +82,7 @@ def remap_range(value, left_min, left_max, right_min, right_max):
 	# Convert the 0-1 range into a value in the right range.
 	return float(right_min + (valueScaled * right_span))
 		
-def record(transcription):
+def record(transcription, responses, change):
 	# recording config
 	DEVICE = 0
 	FORMAT = pyaudio.paInt32
@@ -183,14 +183,9 @@ def record(transcription):
 			response = output.choices[0].message.content
 			print("response: ", response)
 			
-			# tts initialization
-			engine = pyttsx3.init()
-			# Set properties _before_ you add things to say
-			engine.setProperty('rate', 100)    # Speed percent (can go over 100)
-			
-			# SPEAK THE RESPONSE
-			engine.say(response)
-			engine.runAndWait()
+			# save responses and set changed variable
+			responses.value = response
+			change[0] = 1
 		except:
 			pass
 	
@@ -285,13 +280,15 @@ if __name__ == '__main__':
 	# start transcription with current time
 	manager = multiprocessing.Manager()
 	transcription = manager.Value(c_char_p, str(datetime.now()))
+	response = manager.Value(c_char_p)
+	change = multiprocessing.Array('d', 1)
 	
 	# set the buttons and volume
 	inputs = multiprocessing.Array('d', 8)
 	
 	# main loop
 	sensing = Process(target=sensors, args=(inputs,))
-	recording = Process(target=record, args=(transcription,))
+	recording = Process(target=record, args=(transcription, responses))
 	sensing.start()
 	
 	while True:
@@ -349,7 +346,7 @@ if __name__ == '__main__':
 					engine.runAndWait()
 					
 					# lever has changed
-					while inputs[5] == 1:
+					while inputs[5] != 1:
 						pass
 					
 					cachedInputs = inputs #cache the inputs to make sure they don't change
@@ -360,6 +357,19 @@ if __name__ == '__main__':
 					# start recording
 					recording.start()
 					
+					# recording is finished
+					while change[0] != 1:
+						pass
+					# reset tracker of recording
+					change[0] = 0
+					print("playing message")
+					
+					# tts initialization
+					engine = pyttsx3.init()
+					engine.setProperty('rate', 100)    # Speed percent (can go over 100)
+					# SPEAK THE RESPONSE
+					engine.say(str(responses.value))
+					engine.runAndWait()
 	sensing.join()
 	recording.join()
 	
