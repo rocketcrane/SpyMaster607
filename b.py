@@ -69,47 +69,10 @@ def remap_range(value, left_min, left_max, right_min, right_max):
 	right_span = right_max - right_min
 	
 	# Convert the left range into a 0-1 range (int)
-	valueScaled = int(value - left_min) / int(left_span)
+	valueScaled = float(value - left_min) / float(left_span)
 	
 	# Convert the 0-1 range into a value in the right range.
-	return int(right_min + (valueScaled * right_span))
-
-def remap_range_logarithmic(value, left_min, left_max, right_min, right_max):
-	"""Remaps a value from an original (left) range to a new (right) range logarithmically.
-	
-	Args:
-		value: The value to remap.
-		left_min: The minimum value of the left range.
-		left_max: The maximum value of the left range.
-		right_min: The minimum value of the right range.
-		right_max: The maximum value of the right range.
-	
-	Returns:
-		The remapped value within the right range.
-	"""
-	
-	# Handle zero in the left range to avoid division by zero
-	if left_min == 0:
-		left_min = 1e-9  # Adjust slightly to avoid log(0)
-	
-	# Prevent potential infinities during calculations
-	if value <= left_min:
-		return right_min
-	elif value >= left_max:
-		return right_max
-	
-	# Apply a small offset to avoid log(0) errors for values near zero
-	offset = 1e-6
-	
-	# Calculate logarithmic scaling factors
-	left_log_span = math.log10(left_max + offset) - math.log10(left_min + offset)
-	right_log_span = math.log10(right_max) - math.log10(right_min)
-	
-	# Remap value logarithmically
-	value_log = math.log10(value + offset) / left_log_span
-	value_scaled = right_min * math.pow(10, value_log * right_log_span)
-	
-	return value_scaled
+	return float(right_min + (valueScaled * right_span))
 		
 def record(transcription):
 	# recording config
