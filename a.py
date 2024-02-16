@@ -58,10 +58,6 @@ try:
 	mcp = MCP.MCP3008(spi, cs)
 	# create an analog input channel on pin 0
 	chan0 = AnalogIn(mcp, MCP.P0)
-	last_read = 0       # this keeps track of the last potentiometer value
-	tolerance = 250     # to keep from being jittery we'll only change
-						# volume when the pot has moved a significant amount
-						# on a 16-bit ADC
 except:
 	pass
 
@@ -132,6 +128,7 @@ def synthesis(transcription):
 	oldStamp = 0
 	while True:
 		stamp = os.stat("recording.mp3").st_mtime
+		print("last file changed time " stamp)
 		# only transcribe if the file has changed
 		if stamp != oldStamp:
 			oldStamp = stamp
@@ -142,7 +139,11 @@ def synthesis(transcription):
 			print(transcription.value)
 	
 def sensors(inputs):
-	oldVolumeBoolean = False
+	oldVolumeBoolean = False # keeps track of the volume switch
+	last_read = 0       # this keeps track of the last potentiometer value
+	tolerance = 250     # to keep from being jittery we'll only change
+	# volume when the pot has moved a significant amount
+	# on a 16-bit ADC
 	while True:
 		# read GPIO pins
 		try:
