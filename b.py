@@ -64,9 +64,11 @@ def list_input_device(p):
 
 def remap_range(value, left_min, left_max, right_min, right_max):
 	# log addition
-	log_left_min = math.log(left_min + 1e-5)
+	if value == 0:
+		value = value + 1
+	log_left_min = math.log(left_min + 1)
 	log_left_max = math.log(left_max)
-	log_value = math.log(value+1e-5)
+	log_value = math.log(value)
 	
 	# this remaps a value from original (left) range to new (right) range
 	# Figure out how 'wide' each range is
@@ -195,7 +197,7 @@ def sensors(inputs):
 	oldBut = 0
 	
 	last_read = 0       # this keeps track of the last potentiometer value
-	tolerance = 250     # to keep from being jittery we'll only change
+	tolerance = 10     # to keep from being jittery we'll only change
 	# volume when the pot has moved a significant amount
 	# on a 16-bit ADC
 	
@@ -255,7 +257,7 @@ def sensors(inputs):
 				
 				# convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
 				print(trim_pot)
-				inputs[3] = remap_range(trim_pot, 0, 100000, 0, 100)
+				inputs[3] = remap_range(trim_pot, 0, 70000, 0, 100)
 				# set OS volume playback volume
 				# print('Volume = {volume}%' .format(volume = inputs[3]))
 				#set_vol_cmd = 'sudo amixer cset numid=1 -- {volume}% > /dev/null' \
