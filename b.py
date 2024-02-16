@@ -209,15 +209,27 @@ def sensors(inputs):
 			elif GPIO.input(but) == GPIO.LOW:
 				inputs[2] = 1
 			# do stuff if the volume switch changed
-			if oldVol != inputs[0] or oldLev != inputs[1] or oldBut != inputs[2]:
-				# let the main code know the input has changed
+			if oldVol != inputs[0]:
+				# let the main code know the switch has changed
 				inputs[4] = 1
 				
 				# update values that keep track of changes
 				oldVol = inputs[0]
-				oldLev = inputs[1]
+				
 				oldBut = inputs[2]
-				print("volume switch is ", inputs[0], " lever is ", inputs[1], " button is ", inputs[2])
+				print("volume switch is ", inputs[0])
+				
+			# ditto if lever has changed
+			if oldLev != inputs[1]:
+				inputs[5] = 1 # let main code know of change
+				oldLev = inputs[1] # update values that keep track
+				print(" lever is ", inputs[1])
+			
+			# or if button has changed
+			if oldBut != inputs[2]:
+				inputs[6] = 1 # let main code know of change
+				oldBut = inputs[2] # update values that keep track
+				print(" button is ", inputs[2])
 		except:
 			pass
 				
@@ -232,8 +244,8 @@ def sensors(inputs):
 			if pot_adjust > tolerance:
 				trim_pot_changed = True
 			if trim_pot_changed:
-				# let the main code know the input has changed
-				inputs[4] = 1
+				# let the main code know the pot has changed
+				inputs[7] = 1
 				
 				# convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
 				inputs[3] = remap_range(trim_pot, 0, 65535, 0, 100)
@@ -257,28 +269,37 @@ if __name__ == '__main__':
 	transcription = manager.Value(c_char_p, str(datetime.now()))
 	
 	# set the buttons and volume
-	inputs = multiprocessing.Array('d', 5)
+	inputs = multiprocessing.Array('d', 8)
 	
 	# main loop
 	sensing = Process(target=sensors, args=(inputs,))
 	recording = Process(target=record, args=(transcription,))
 	sensing.start()
 	
-	# keep track of old inputs
-	oldInputs = multiprocessing.Array('d', 5)
-	
 	while True:
-		# some input has changed
+		# vol switch has changed
 		if inputs[4] == 1:
-			cachedInputs = inputs
-			print("old volSwitch ", oldInputs[0]," new ", inputs[0])
-			if cachedInputs[0] != oldInputs[0]:
-				print("vol button on")
+			cachedInputs = inputs #cache the inputs to make sure they don't change
+			print("volume is now ", cachedInputs[0])
 			
 			# reset tracker of input changes
 			inputs[4] = 0
-			# update tracker of old inputs
-			oldInputs = cachedInputs
+		
+		# lever has changed
+		if inputs[5] == 1:
+			cachedInputs = inputs #cache the inputs to make sure they don't change
+			print("lever is now ", cachedInputs[1])
+			
+			# reset tracker of input changes
+			inputs[5] = 0
+		
+		# button has changed
+		if inputs[6] == 1:
+			cachedInputs = inputs #cache the inputs to make sure they don't change
+			print("button is now ", cachedInputs[2])
+			
+			# reset tracker of input changes
+			inputs[6] = 0
 	
 	#recording.start()
 	sensing.join()
