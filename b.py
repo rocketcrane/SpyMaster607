@@ -100,7 +100,7 @@ def record(transcription):
 		engine = pyttsx3.init()
 		
 		# Set properties _before_ you add things to say
-		engine.setProperty('rate', 50)    # Speed percent (can go over 100)
+		engine.setProperty('rate', 100)    # Speed percent (can go over 100)
 	except:
 		pass
 	
