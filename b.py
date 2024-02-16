@@ -254,6 +254,7 @@ def sensors(inputs):
 				inputs[7] = 1
 				
 				# convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
+				print(trim_pot)
 				inputs[3] = remap_range(trim_pot, 0, 100000, 0, 100)
 				# set OS volume playback volume
 				# print('Volume = {volume}%' .format(volume = inputs[3]))
