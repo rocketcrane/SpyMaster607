@@ -272,9 +272,8 @@ def sensors(inputs):
 #AUDIO = False
 AUDIO = True
 
-if AUDIO:
-	# startup pyAudio
-	audio = pyaudio.PyAudio()
+
+audio = pyaudio.PyAudio()
 
 if __name__ == '__main__':
 	# start transcription with current time
