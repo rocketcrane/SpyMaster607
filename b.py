@@ -257,7 +257,7 @@ def sensors(inputs):
 				inputs[7] = 1
 				
 				# convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
-				print(trim_pot)
+				#print(trim_pot)
 				inputs[3] = remap_range(trim_pot, 0, 65535, 0, 100)
 				# set OS volume playback volume
 				# print('Volume = {volume}%' .format(volume = inputs[3]))
@@ -304,9 +304,22 @@ if __name__ == '__main__':
 				# tts initialization
 				engine = pyttsx3.init()
 				engine.setProperty('rate', 100)    # Speed percent (can go over 100)
+				
 				# SPEAK THE RESPONSE
 				engine.say(str("Connect to HQ at "+str(spyMasterChannel)))
 				engine.runAndWait()
+				
+				# potentiometer has changed
+				if inputs[7] == 1:
+					cachedInputs = inputs #cache the inputs to make sure they don't change
+					# print("potentiometer is now ", cachedInputs[3])
+					# reset tracker of input changes
+					inputs[7] = 0
+					
+					if cachedInputs[3]/10 > spyMasterChannel:
+						# SPEAK THE RESPONSE
+						engine.say(str("Connected")
+						engine.runAndWait()
 		
 		# lever has changed
 		if inputs[5] == 1:
@@ -323,14 +336,6 @@ if __name__ == '__main__':
 			
 			# reset tracker of input changes
 			inputs[6] = 0
-		
-		# potentiometer has changed
-		if inputs[7] == 1:
-			cachedInputs = inputs #cache the inputs to make sure they don't change
-			# print("potentiometer is now ", cachedInputs[3])
-			
-			# reset tracker of input changes
-			inputs[7] = 0
 	
 	#recording.start()
 	sensing.join()
