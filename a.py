@@ -139,7 +139,7 @@ def synthesis(transcription):
 			audio_file_path = "recording.mp3"
 			# transcribe audio with OpenAI whisper and save
 			with open(audio_file_path, 'rb') as audio_file:
-			current_transcription = client.audio.transcriptions.create(model="whisper-1", 
+				current_transcription = client.audio.transcriptions.create(model="whisper-1", 
 																	file=audio_file_path,
 																	# [-x:] gets last x characters of string
 																	prompt=last_transcription[-WHISPER_CONTEXT_LENGTH:],
