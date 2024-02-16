@@ -149,13 +149,24 @@ def synthesis(transcription):
 																response_format="text")
 			transcription.value += " " # add a space for readability
 			transcription.value = current_transcription
-			print(transcription.value)
+			print("transcription:", transcription.value)
 			
 			# increment index
 			index = index + 1
 			
 			# remove the file
 			os.remove(MP3_FILENAME_ALL)
+			
+			# response
+			output = client.chat.completions.create(
+				model="gpt-4-turbo-preview",
+				messages=[
+				{"role": "system", "content": "You are the spymaster of the world's best, most top secret spy organization. Mentor, teach, and support your spy through the spy walkie-talkie. Don't talk directly about who you are or your organization, be discreet but helpful, and be very concise."},
+				{"role": "user", "content": transcription.value}
+			  ]
+			)
+			response = output.choices[0].message.content
+			print("response: ", response)
 		except:
 			pass
 	
@@ -226,7 +237,7 @@ def response(prompt, response):
 	  ]
 	)
 	response = output.choices[0].message.content
-	print(response)
+	print("response: ", response)
 # --------------------------------------------------------------------------------
 
 # startup pyAudio
@@ -254,15 +265,15 @@ if __name__ == '__main__':
 	sensing = Process(target=sensors, args=(inputs,))
 	recording = Process(target=record)
 	synthesizing = Process(target=synthesis, args=(transcription,))
-	responding = Process(target=response, args=(prompt, response))
+	#responding = Process(target=response, args=(prompt, response))
 	sensing.start()
 	recording.start()
 	synthesizing.start()
-	responding.start()
+	#responding.start()
 	sensing.join()
 	recording.join()
 	synthesizing.join()
-	responding.join()
+	#responding.join()
 
 	# cleanup
 	audio.terminate()
