@@ -348,10 +348,23 @@ if __name__ == '__main__':
 					# lever has changed
 					while inputs[5] == 1:
 						pass
+					
 					cachedInputs = inputs #cache the inputs to make sure they don't change
 					print("lever is now ", cachedInputs[1])
 					# reset tracker of input changes
 					inputs[5] = 0
+					
+					# start recording
+					recording.start()
+					sleep(30)
+					recording.join()
+					# tts initialization
+					engine = pyttsx3.init()
+					engine.setProperty('rate', 100)    # Speed percent (can go over 100)
+					# SPEAK THE RESPONSE
+					engine.say("Disconnected.")
+					engine.runAndWait()
+					
 	#recording.start()
 	sensing.join()
 	#recording.join()
