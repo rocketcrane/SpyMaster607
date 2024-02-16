@@ -142,7 +142,7 @@ def synthesis(transcription):
 				current_transcription = client.audio.transcriptions.create(model="whisper-1", 
 																	file=audio_file_path,
 																	# [-x:] gets last x characters of string
-																	prompt=last_transcription[-WHISPER_CONTEXT_LENGTH:],
+																	prompt=transcription[-WHISPER_CONTEXT_LENGTH:],
 																	temperature=WHISPER_TEMP,
 																	response_format="text")
 			transcription.value += " " # add a space for readability
