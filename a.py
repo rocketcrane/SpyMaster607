@@ -100,38 +100,46 @@ def remap_range(value, left_min, left_max, right_min, right_max):
 		# Convert the 0-1 range into a value in the right range.
 		return int(right_min + (valueScaled * right_span))
 		
-def record(transcription):
-	# recording
-	stream = audio.open(format=FORMAT, channels=CHANNELS,
-						rate=RATE, input=True, input_device_index=DEVICE,
-						frames_per_buffer=CHUNK)
-	frames = []
-	print("Recording started...")
-	for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
-		data = stream.read(CHUNK)
-		frames.append(data)
-	print("Recording finished.")
+def record():
+	while True:
+		# recording
+		stream = audio.open(format=FORMAT, channels=CHANNELS,
+							rate=RATE, input=True, input_device_index=DEVICE,
+							frames_per_buffer=CHUNK)
+		frames = []
+		print("Recording started...")
+		for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+			data = stream.read(CHUNK)
+			frames.append(data)
+		print("Recording finished.")
+		
+		# stop stream - might prevent pyAudio issues
+		stream.stop_stream()
+		stream.close()
+		
+		# generate .wav file
+		with wave.open(OUTPUT_FILENAME, 'wb') as wf:
+			wf.setnchannels(CHANNELS)
+			wf.setsampwidth(audio.get_sample_size(FORMAT))
+			wf.setframerate(RATE)
+			wf.writeframes(b''.join(frames))
+		
+		# convert .wav to .mp3
+		mp3 =  pydub.AudioSegment.from_wav("recording.wav")
+		mp3.export("recording.mp3", format="mp3")
 	
-	# stop stream - might prevent pyAudio issues
-	stream.stop_stream()
-	stream.close()
-	
-	# generate .wav file
-	with wave.open(OUTPUT_FILENAME, 'wb') as wf:
-		wf.setnchannels(CHANNELS)
-		wf.setsampwidth(audio.get_sample_size(FORMAT))
-		wf.setframerate(RATE)
-		wf.writeframes(b''.join(frames))
-	
-	# convert .wav to .mp3
-	mp3 =  pydub.AudioSegment.from_wav("recording.wav")
-	mp3.export("recording.mp3", format="mp3")
-	
-	# transcribe audio with OpenAI whisper and save
-	current_transcription = transcribe_audio(Path(__file__).parent / MP3_FILENAME, transcription.value)
-	transcription.value += " " # add a space for readability
-	transcription.value += current_transcription
-	print(transcription.value)
+def synthesis(transcription):
+	oldStamp = 0
+	while True:
+		stamp = os.stat("recording.mp3").st_mtime
+		# only transcribe if the file has changed
+		if stamp != oldStamp:
+			oldStamp = stamp
+			# transcribe audio with OpenAI whisper and save
+			current_transcription = transcribe_audio(Path(__file__).parent / MP3_FILENAME, transcription.value)
+			transcription.value += " " # add a space for readability
+			transcription.value += current_transcription
+			print(transcription.value)
 	
 def sensors(inputs):
 	while True:
@@ -142,9 +150,9 @@ def sensors(inputs):
 			elif GPIO.input(vol) == GPIO.LOW:
 				inputs[0] = 1
 			if GPIO.input(lev) == GPIO.HIGH:
-				inputs[1] = 0
-			elif GPIO.input(lev) == GPIO.LOW:
 				inputs[1] = 1
+			elif GPIO.input(lev) == GPIO.LOW:
+				inputs[1] = 0
 			if GPIO.input(but) == GPIO.HIGH:
 				inputs[2] = 0
 			elif GPIO.input(but) == GPIO.LOW:
@@ -203,14 +211,14 @@ if __name__ == '__main__':
 	# main loop
 	#while True:
 	sensing = Process(target=sensors, args=(inputs,))
-	if not sensing.is_alive():
-		sensing.start()
+	recording = Process(target=record)
+	synthesizing = Process(target=synthesis, args=(transcription,))
+	sensing.start()
+	recording.start()
+	synthesizing.start()
 	sensing.join()
-	
-	recording = Process(target=record, args=(transcription,))
-	if not recording.is_alive():
-		recording.start()
 	recording.join()
+	synthesizing.join()
 
 	# cleanup
 	audio.terminate()
