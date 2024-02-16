@@ -23,6 +23,7 @@ import wave
 import time
 import multiprocessing
 from ctypes import c_char_p
+from ctypes import c_uint8
 load_dotenv()
 client = OpenAI()
 
@@ -131,50 +132,23 @@ def record(transcription):
 	transcription.value += " " # add a space for readability
 	transcription.value += current_transcription
 	print(transcription.value)
-# --------------------------------------------------------------------------------
-
-# buttons and volume global variables
-volSwitch = False
-lever = False
-button = False
-set_volume = 0
-# startup pyAudio
-audio = pyaudio.PyAudio()
-
-if __name__ == '__main__':
-	# start transcription with current time
-	manager = multiprocessing.Manager()
-	transcription = manager.Value(c_char_p, str(datetime.now()))
 	
-	# delete old recordings - might prevent recording issues
-	try:
-		os.remove("recording.mp3")
-		os.remove("recording.wav")
-	except:
-		pass
-		# print("No recordings to delete.")
-	
-	# are we using the right pyaudio device?
-	list_input_device(audio)
-	print("using device", DEVICE)
-	
-	# main loop
-	#while True:
-		# read GPIO pins
+def sensors(inputs):
+	# read GPIO pins
 	try:
 		if GPIO.input(vol) == GPIO.HIGH:
-			volSwitch = False
+			inputs[0] = 0
 		elif GPIO.input(vol) == GPIO.LOW:
-			volSwitch = True
+			inputs[0] = 1
 		if GPIO.input(lev) == GPIO.HIGH:
-			lever = True
+			inputs[1] = 0
 		elif GPIO.input(lev) == GPIO.LOW:
-			lever = False
+			inputs[1] = 1
 		if GPIO.input(but) == GPIO.HIGH:
-			button = False
+			inputs[2] = 0
 		elif GPIO.input(but) == GPIO.LOW:
-			button = True
-		print("volume switch is ", volSwitch, " lever is ", lever, " button is ", button)
+			inputs[2] = 1
+		print("volume switch is ", inputs[0], " lever is ", inputs[1], " button is ", inputs[2])
 	except:
 		pass
 			
@@ -190,17 +164,48 @@ if __name__ == '__main__':
 			trim_pot_changed = True
 		if trim_pot_changed:
 			# convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
-			set_volume = remap_range(trim_pot, 0, 65535, 0, 100)
+			inputs[3] = remap_range(trim_pot, 0, 65535, 0, 100)
 			# set OS volume playback volume
-			print('Volume = {volume}%' .format(volume = set_volume))
+			print('Volume = {volume}%' .format(volume = inputs[3]))
 			#set_vol_cmd = 'sudo amixer cset numid=1 -- {volume}% > /dev/null' \
-			#.format(volume = set_volume)
+			#.format(volume = inputs[3])
 			#os.system(set_vol_cmd)
 			# save the potentiometer reading for the next loop
 			last_read = trim_pot
 	except:
 		pass
-		
+# --------------------------------------------------------------------------------
+
+# startup pyAudio
+audio = pyaudio.PyAudio()
+
+if __name__ == '__main__':
+	# start transcription with current time
+	manager = multiprocessing.Manager()
+	transcription = manager.Value(c_char_p, str(datetime.now()))
+	
+	# set the buttons and volume
+	inputs = multiprocessing.Array('d', 4)
+	
+	# delete old recordings - might prevent recording issues
+	try:
+		os.remove("recording.mp3")
+		os.remove("recording.wav")
+	except:
+		pass
+		# print("No recordings to delete.")
+	
+	# are we using the right pyaudio device?
+	list_input_device(audio)
+	print("using device", DEVICE)
+	
+	# main loop
+	#while True:
+	sensing = Process(target=sensors, args=(inputs,))
+	if not sensing.is_alive():
+		sensing.start()
+	sensing.join()
+	
 	recording = Process(target=record, args=(transcription,))
 	if not recording.is_alive():
 		recording.start()
