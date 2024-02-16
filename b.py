@@ -299,6 +299,7 @@ if __name__ == '__main__':
 			# reset tracker of input changes
 			inputs[4] = 0
 			
+			# volume switch is on
 			if cachedInputs[0] == 1:
 				# tts initialization
 				engine = pyttsx3.init()
@@ -317,13 +318,30 @@ if __name__ == '__main__':
 					# reset tracker of input changes
 					inputs[7] = 0
 					
+					# connect to channel
 					if cachedInputs[3] > spyMasterChannel:
 						# tts initialization
 						engine = pyttsx3.init()
 						engine.setProperty('rate', 100)    # Speed percent (can go over 100)
 						# SPEAK THE RESPONSE
-						engine.say(str("Connected"))
+						engine.say(str("Secure Datalink found, enter secret code to connect"))
 						engine.runAndWait()
+						
+						# button has changed
+						if inputs[6] == 1:
+							cachedInputs = inputs #cache the inputs to make sure they don't change
+							print("button is now ", cachedInputs[2])
+							# reset tracker of input changes
+							inputs[6] = 0
+							
+							# button was pressed
+							if cachedInputs[2] == 1:
+								# tts initialization
+								engine = pyttsx3.init()
+								engine.setProperty('rate', 100)    # Speed percent (can go over 100)
+								# SPEAK THE RESPONSE
+								engine.say(str("Connected. Welcome, agent."))
+								engine.runAndWait()
 		
 		# lever has changed
 		if inputs[5] == 1:
