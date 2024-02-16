@@ -142,7 +142,7 @@ def record(transcription, responses, change):
 			wf.writeframes(b''.join(frames))
 		
 		# convert .wav to .mp3
-		MP3_FILENAME_ALL = MP3_FILENAME + str(index) + ".mp3"
+		MP3_FILENAME_ALL = MP3_FILENAME + ".mp3"
 		mp3 =  pydub.AudioSegment.from_wav(OUTPUT_FILENAME)
 		mp3.export(MP3_FILENAME_ALL, format="mp3")
 		
@@ -155,7 +155,7 @@ def record(transcription, responses, change):
 		'''
 	
 		try:
-			MP3_FILENAME_ALL = MP3_FILENAME + str(index) + ".mp3"
+			MP3_FILENAME_ALL = MP3_FILENAME + ".mp3"
 			audio_file = open(MP3_FILENAME_ALL, 'rb')
 			# transcribe audio with OpenAI whisper and save
 			current_transcription = client.audio.transcriptions.create(model="whisper-1", 
@@ -170,7 +170,7 @@ def record(transcription, responses, change):
 			index = index + 1
 			
 			# remove the file
-			os.remove(MP3_FILENAME_ALL)
+			#os.remove(MP3_FILENAME_ALL)
 			
 			# response
 			output = client.chat.completions.create(
@@ -365,7 +365,7 @@ if __name__ == '__main__':
 					
 					# tts initialization
 					engine = pyttsx3.init()
-					engine.setProperty('rate', 100)    # Speed percent (can go over 100)
+					engine.setProperty('rate', 150)    # Speed percent (can go over 100)
 					# SPEAK THE RESPONSE
 					engine.say(str(responses.value))
 					engine.runAndWait()
