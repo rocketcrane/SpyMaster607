@@ -120,6 +120,12 @@ def record():
 		
 		# increment index
 		index = index + 1
+		
+		# remove .wav file
+		try:
+			os.remove("recording.wav")
+		except:
+			pass
 	
 def synthesis(transcription):
 	# whisper config
@@ -142,7 +148,7 @@ def synthesis(transcription):
 																temperature=WHISPER_TEMP,
 																response_format="text")
 			transcription.value += " " # add a space for readability
-			transcription.value += current_transcription
+			transcription.value = current_transcription
 			print(transcription.value)
 			
 			# increment index
@@ -210,6 +216,17 @@ def sensors(inputs):
 				last_read = trim_pot
 		except:
 			pass
+
+def response(prompt, response):
+	output = client.chat.completions.create(
+		model="gpt-4-turbo-preview",
+		messages=[
+		{"role": "system", "content": "You are the spymaster of the world's best, most top secret spy organization. Mentor, teach, and support your spy through the spy walkie-talkie. Don't talk directly about who you are or your organization, be discreet but helpful, and be very concise."},
+		{"role": "user", "content": prompt}
+	  ]
+	)
+	response = output.choices[0].message.content
+	print(response)
 # --------------------------------------------------------------------------------
 
 # startup pyAudio
@@ -219,6 +236,10 @@ if __name__ == '__main__':
 	# start transcription with current time
 	manager = multiprocessing.Manager()
 	transcription = manager.Value(c_char_p, str(datetime.now()))
+	
+	# set up the prompt
+	prompt = manager.Value(c_char_p, transcription.value))
+	response = manager.Value(c_char_p, str())
 	
 	# set the buttons and volume
 	inputs = multiprocessing.Array('d', 4)
@@ -230,16 +251,18 @@ if __name__ == '__main__':
 		pass
 	
 	# main loop
-	#while True:
 	sensing = Process(target=sensors, args=(inputs,))
 	recording = Process(target=record)
 	synthesizing = Process(target=synthesis, args=(transcription,))
+	responding = Process(target=response(prompt, response))
 	sensing.start()
 	recording.start()
 	synthesizing.start()
+	responding.start()
 	sensing.join()
 	recording.join()
 	synthesizing.join()
+	responding.join()
 
 	# cleanup
 	audio.terminate()
