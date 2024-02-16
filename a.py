@@ -79,7 +79,7 @@ def record():
 	CHANNELS = 1
 	RATE = 44100
 	CHUNK = 1024
-	RECORD_SECONDS = 2
+	RECORD_SECONDS = 5
 	OUTPUT_FILENAME = "recording.wav"
 	MP3_FILENAME = "recording"
 	
