@@ -136,15 +136,14 @@ def synthesis(transcription):
 		# only transcribe if the file has changed
 		if stamp != oldStamp:
 			oldStamp = stamp
-			audio_file_path = "recording.mp3"
+			audio_file = open("recording.mp3", 'rb')
 			# transcribe audio with OpenAI whisper and save
-			with open(audio_file_path, 'rb') as audio_file:
-				current_transcription = client.audio.transcriptions.create(model="whisper-1", 
-																	file=audio_file_path,
-																	# [-x:] gets last x characters of string
-																	prompt=transcription[-WHISPER_CONTEXT_LENGTH:],
-																	temperature=WHISPER_TEMP,
-																	response_format="text")
+			current_transcription = client.audio.transcriptions.create(model="whisper-1", 
+																file=audio_file,
+																# [-x:] gets last x characters of string
+																prompt=transcription.value[-WHISPER_CONTEXT_LENGTH:],
+																temperature=WHISPER_TEMP,
+																response_format="text")
 			transcription.value += " " # add a space for readability
 			transcription.value += current_transcription
 			print(transcription.value)
