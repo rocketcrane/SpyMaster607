@@ -147,10 +147,12 @@ def record(transcription):
 		mp3.export(MP3_FILENAME_ALL, format="mp3")
 		
 		# remove .wav file
+		'''
 		try:
 			os.remove("recording.wav")
 		except:
 			pass
+		'''
 	
 		try:
 			MP3_FILENAME_ALL = MP3_FILENAME + str(index) + ".mp3"
@@ -357,18 +359,9 @@ if __name__ == '__main__':
 					
 					# start recording
 					recording.start()
-					sleep(30)
-					recording.join()
-					# tts initialization
-					engine = pyttsx3.init()
-					engine.setProperty('rate', 100)    # Speed percent (can go over 100)
-					# SPEAK THE RESPONSE
-					engine.say("Disconnected.")
-					engine.runAndWait()
 					
-	#recording.start()
 	sensing.join()
-	#recording.join()
+	recording.join()
 	
 	# cleanup
 	audio.terminate()
