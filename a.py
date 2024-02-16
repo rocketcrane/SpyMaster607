@@ -27,23 +27,10 @@ from ctypes import c_uint8
 load_dotenv()
 client = OpenAI()
 
-# whisper config
-WHISPER_TEMP = 0
-WHISPER_CONTEXT_LENGTH = 400 # context characters to feed into whisper
-
-# recording config
-DEVICE = 0
-FORMAT = pyaudio.paInt32
-CHANNELS = 1
-RATE = 44100
-CHUNK = 1024
-RECORD_SECONDS = 2
-OUTPUT_FILENAME = "recording.wav"
-MP3_FILENAME = "recording.mp3"
-
 try:
 	# GPIO & potentiometer setup	
 	GPIO.setmode(GPIO.BCM)
+	# pin numbers for buttons/switches
 	vol = 16
 	lev = 23
 	but = 25
@@ -62,17 +49,6 @@ except:
 	pass
 
 # ------------------------------------FUNCTIONS----------------------------------
-# speech-to-text, uses previous transcription for context
-def transcribe_audio(audio_file_path, last_transcription):
-	with open(audio_file_path, 'rb') as audio_file:
-		curr_transcription = client.audio.transcriptions.create(model="whisper-1", 
-																file=audio_file_path,
-																# [-x:] gets last x characters of string
-																prompt=last_transcription[-WHISPER_CONTEXT_LENGTH:],
-																temperature=WHISPER_TEMP,
-																response_format="text")
-	return curr_transcription
-
 # list input devices, p = pyAudio instance
 def list_input_device(p):
 	nDevices = p.get_device_count()
@@ -97,6 +73,23 @@ def remap_range(value, left_min, left_max, right_min, right_max):
 		return int(right_min + (valueScaled * right_span))
 		
 def record():
+	# recording config
+	DEVICE = 0
+	FORMAT = pyaudio.paInt32
+	CHANNELS = 1
+	RATE = 44100
+	CHUNK = 1024
+	RECORD_SECONDS = 2
+	OUTPUT_FILENAME = "recording.wav"
+	MP3_FILENAME = "recording"
+	
+	# are we using the right pyaudio device?
+	list_input_device(audio)
+	print("using device", DEVICE)
+	
+	# start index at 0
+	index = 0
+	
 	while True:
 		# recording
 		stream = audio.open(format=FORMAT, channels=CHANNELS,
@@ -121,36 +114,44 @@ def record():
 			wf.writeframes(b''.join(frames))
 		
 		# convert .wav to .mp3
-		mp3 =  pydub.AudioSegment.from_wav("recording.wav")
-		mp3.export("recording.mp3", format="mp3")
+		MP3_FILENAME_ALL = MP3_FILENAME + str(index) + ".mp3"
+		mp3 =  pydub.AudioSegment.from_wav(OUTPUT_FILENAME)
+		mp3.export(MP3_FILENAME_ALL, format="mp3")
+		
+		# increment index
+		index = index + 1
 	
 def synthesis(transcription):
-	oldStamp = 0
-	stamp = 0
+	# whisper config
+	WHISPER_TEMP = 0
+	WHISPER_CONTEXT_LENGTH = 400 # context characters to feed into whisper
+	
+	# keep track of index
+	MP3_FILENAME = "recording"
+	index = 0
+	
 	while True:
-		# find out when the file has been changed
 		try:
-			stamp = os.stat("recording.mp3").st_mtime
+			MP3_FILENAME_ALL = MP3_FILENAME + str(index) + ".mp3"
+			audio_file = open(MP3_FILENAME_ALL, 'rb')
+			# transcribe audio with OpenAI whisper and save
+			current_transcription = client.audio.transcriptions.create(model="whisper-1", 
+																file=audio_file,
+																# [-x:] gets last x characters of string
+																prompt=transcription.value[-WHISPER_CONTEXT_LENGTH:],
+																temperature=WHISPER_TEMP,
+																response_format="text")
+			transcription.value += " " # add a space for readability
+			transcription.value += current_transcription
+			print(transcription.value)
+			
+			# increment index
+			index = index + 1
+			
+			# remove the file
+			os.remove(MP3_FILENAME_ALL)
 		except:
 			pass
-		# only transcribe if the file has changed
-		if stamp != oldStamp:
-			oldStamp = stamp
-			print("last file changed time ", stamp)
-			try:
-				audio_file = open("recording.mp3", 'rb')
-				# transcribe audio with OpenAI whisper and save
-				current_transcription = client.audio.transcriptions.create(model="whisper-1", 
-																	file=audio_file,
-																	# [-x:] gets last x characters of string
-																	prompt=transcription.value[-WHISPER_CONTEXT_LENGTH:],
-																	temperature=WHISPER_TEMP,
-																	response_format="text")
-				transcription.value += " " # add a space for readability
-				transcription.value += current_transcription
-				print(transcription.value)
-			except:
-				print("problem transcribing")
 	
 def sensors(inputs):
 	oldVolumeBoolean = False # keeps track of the volume switch
@@ -219,15 +220,10 @@ if __name__ == '__main__':
 	
 	# delete old recordings - might prevent recording issues
 	try:
-		os.remove("recording.mp3")
 		os.remove("recording.wav")
 	except:
 		pass
 		# print("No recordings to delete.")
-	
-	# are we using the right pyaudio device?
-	list_input_device(audio)
-	print("using device", DEVICE)
 	
 	# main loop
 	#while True:
