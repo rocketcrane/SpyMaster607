@@ -317,7 +317,10 @@ if __name__ == '__main__':
 					# reset tracker of input changes
 					inputs[7] = 0
 					
-					if cachedInputs[3]/10 > spyMasterChannel:
+					if cachedInputs[3] > spyMasterChannel:
+						# tts initialization
+						engine = pyttsx3.init()
+						engine.setProperty('rate', 100)    # Speed percent (can go over 100)
 						# SPEAK THE RESPONSE
 						engine.say(str("Connected"))
 						engine.runAndWait()
