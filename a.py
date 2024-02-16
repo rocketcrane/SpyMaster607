@@ -14,7 +14,7 @@ WHISPER_TEMP = 0
 WHISPER_CONTEXT_LENGTH = 400 # context characters to feed into whisper
 
 # recording config
-DEVICE = 1
+DEVICE = 0
 FORMAT = pyaudio.paInt32
 CHANNELS = 1
 RATE = 44100
@@ -59,12 +59,12 @@ transcription = str(datetime.now())
 # startup pyAudio
 audio = pyaudio.PyAudio()
 
+# are we using the right pyaudio device?
+list_input_device(audio)
+print("using device", DEVICE)
+
 # main loop
 while True:
-	# are we using the right pyaudio device?
-	list_input_device(audio)
-	print("using device", DEVICE)
-	
 	# recording
 	stream = audio.open(format=FORMAT, channels=CHANNELS,
 						rate=RATE, input=True, input_device_index=DEVICE,
