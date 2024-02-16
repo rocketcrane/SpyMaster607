@@ -186,6 +186,11 @@ def record(transcription, responses, change):
 			# save responses and set changed variable
 			responses.value = response
 			change[0] = 1
+			
+			engine.setProperty('rate', 150)    # Speed percent (can go over 100)
+			# SPEAK THE RESPONSE
+			engine.say(str(responses.value))
+			engine.runAndWait()
 		except:
 			pass
 	
@@ -275,6 +280,9 @@ AUDIO = True
 
 audio = pyaudio.PyAudio()
 
+# tts initialization
+engine = pyttsx3.init()
+
 if __name__ == '__main__':
 	# start transcription with current time
 	manager = multiprocessing.Manager()
@@ -291,13 +299,12 @@ if __name__ == '__main__':
 	sensing.start()
 	
 	while True:
-		try:
-			recording.join()
-		except:
-			pass
-			
 		# vol switch has changed
 		if inputs[4] == 1:
+			try:
+				recording.join()
+			except:
+				pass
 			cachedInputs = inputs #cache the inputs to make sure they don't change
 			print("volume is now ", cachedInputs[0])
 			# reset tracker of input changes
@@ -361,19 +368,17 @@ if __name__ == '__main__':
 					# start recording
 					recording.start()
 					
-		# recording is finished
-		while change[0] != 1:
-			pass
-		# reset tracker of recording
-		change[0] = 0
-		print("playing message")
-		
-		# tts initialization
-		engine = pyttsx3.init()
-		engine.setProperty('rate', 150)    # Speed percent (can go over 100)
-		# SPEAK THE RESPONSE
-		engine.say(str(responses.value))
-		engine.runAndWait()
+		'''# recording is finished
+		if change[0] == 1:
+			# reset tracker of recording
+			change[0] = 0
+			print("playing message")
+			# tts initialization
+			engine = pyttsx3.init()
+			engine.setProperty('rate', 150)    # Speed percent (can go over 100)
+			# SPEAK THE RESPONSE
+			engine.say(str(responses.value))
+			engine.runAndWait()'''
 		
 	sensing.join()
 	
