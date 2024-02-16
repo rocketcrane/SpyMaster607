@@ -288,7 +288,7 @@ if __name__ == '__main__':
 	
 	# main loop
 	sensing = Process(target=sensors, args=(inputs,))
-	recording = Process(target=record, args=(transcription, responses))
+	recording = Process(target=record, args=(transcription, responses, change))
 	sensing.start()
 	
 	while True:
