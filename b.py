@@ -291,6 +291,11 @@ if __name__ == '__main__':
 	sensing.start()
 	
 	while True:
+		try:
+			recording.join()
+		except:
+			pass
+			
 		# vol switch has changed
 		if inputs[4] == 1:
 			cachedInputs = inputs #cache the inputs to make sure they don't change
@@ -356,21 +361,21 @@ if __name__ == '__main__':
 					# start recording
 					recording.start()
 					
-					# recording is finished
-					while change[0] != 1:
-						pass
-					# reset tracker of recording
-					change[0] = 0
-					print("playing message")
-					
-					# tts initialization
-					engine = pyttsx3.init()
-					engine.setProperty('rate', 150)    # Speed percent (can go over 100)
-					# SPEAK THE RESPONSE
-					engine.say(str(responses.value))
-					engine.runAndWait()
+		# recording is finished
+		while change[0] != 1:
+			pass
+		# reset tracker of recording
+		change[0] = 0
+		print("playing message")
+		
+		# tts initialization
+		engine = pyttsx3.init()
+		engine.setProperty('rate', 150)    # Speed percent (can go over 100)
+		# SPEAK THE RESPONSE
+		engine.say(str(responses.value))
+		engine.runAndWait()
+		
 	sensing.join()
-	recording.join()
 	
 	# cleanup
 	audio.terminate()
