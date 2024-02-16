@@ -1,11 +1,25 @@
+# TODO: logarithmic potentiometer
+
+try:
+	import RPi.GPIO as GPIO
+	import adafruit_mcp3xxx.mcp3008 as MCP
+	import busio
+	import digitalio
+	import board
+	from adafruit_mcp3xxx.analog_in import AnalogIn
+except:
+	print("not on Pi")
+
 from datetime import datetime
 from pathlib import Path
 from openai import OpenAI
 from dotenv import load_dotenv
+from time import sleep
 import os
 import pyaudio
 import pydub
 import wave
+import time
 load_dotenv()
 client = OpenAI()
 
@@ -30,6 +44,30 @@ try:
 except:
 	print("No recordings to delete.")
 
+try:
+	# GPIO & potentiometer setup	
+	GPIO.setmode(GPIO.BCM)
+	vol = 16
+	lev = 23
+	but = 25
+	GPIO.setup(vol, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+	GPIO.setup(lev, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+	GPIO.setup(but, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+	# create the SPI bus
+	spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
+	# create the CS (chip select)
+	cs = digitalio.DigitalInOut(board.D22)
+	# create the MCP object
+	mcp = MCP.MCP3008(spi, cs)
+	# create an analog input channel on pin 0
+	chan0 = AnalogIn(mcp, MCP.P0)
+	last_read = 0       # this keeps track of the last potentiometer value
+	tolerance = 250     # to keep from being jittery we'll only change
+						# volume when the pot has moved a significant amount
+						# on a 16-bit ADC
+except:
+	print("not on Pi")
+
 # ------------------------------------FUNCTIONS----------------------------------
 # speech-to-text, uses previous transcription for context
 def transcribe_audio(audio_file_path, last_transcription):
@@ -52,6 +90,18 @@ def list_input_device(p):
 		print(f"Device ID {i}: {devName}")
 		# print("Device Info: ")
 		# print(deviceInfo)
+
+def remap_range(value, left_min, left_max, right_min, right_max):
+		# this remaps a value from original (left) range to new (right) range
+		# Figure out how 'wide' each range is
+		left_span = left_max - left_min
+		right_span = right_max - right_min
+		
+		# Convert the left range into a 0-1 range (int)
+		valueScaled = int(value - left_min) / int(left_span)
+		
+		# Convert the 0-1 range into a value in the right range.
+		return int(right_min + (valueScaled * right_span))
 # --------------------------------------------------------------------------------
 
 # start transcription with current time
@@ -65,6 +115,47 @@ print("using device", DEVICE)
 
 # main loop
 while True:
+	# read GPIO pins
+	try:
+		if GPIO.input(vol) == GPIO.HIGH:
+			volSwitch = False
+		elif GPIO.input(vol) == GPIO.LOW:
+			volSwitch = True
+		if GPIO.input(lev) == GPIO.HIGH:
+			lever = True
+		elif GPIO.input(lev) == GPIO.LOW:
+			lever = False
+		if GPIO.input(but) == GPIO.HIGH:
+			button = False
+		elif GPIO.input(but) == GPIO.LOW:
+			button = True
+		print("volume switch is ", volSwitch, " lever is ", lever, " button is ", button)
+	except:
+		print("not on Pi")
+	
+	# read potentiometer
+	try:
+		# we'll assume that the pot didn't move
+		trim_pot_changed = False
+		# read the analog pin
+		trim_pot = chan0.value
+		# how much has it changed since the last read?
+		pot_adjust = abs(trim_pot - last_read)
+		if pot_adjust > tolerance:
+			trim_pot_changed = True
+		if trim_pot_changed:
+			# convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
+			set_volume = remap_range(trim_pot, 0, 65535, 0, 100)
+			# set OS volume playback volume
+			print('Volume = {volume}%' .format(volume = set_volume))
+			set_vol_cmd = 'sudo amixer cset numid=1 -- {volume}% > /dev/null' \
+			.format(volume = set_volume)
+			os.system(set_vol_cmd)
+			# save the potentiometer reading for the next loop
+			last_read = trim_pot
+	except:
+		print("not on Pi")
+	
 	# recording
 	stream = audio.open(format=FORMAT, channels=CHANNELS,
 						rate=RATE, input=True, input_device_index=DEVICE,
