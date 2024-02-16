@@ -332,36 +332,26 @@ if __name__ == '__main__':
 					# button has changed
 					while inputs[6] != 1:
 						pass
+						
 					cachedInputs = inputs #cache the inputs to make sure they don't change
 					print("button is now ", cachedInputs[2])
 					# reset tracker of input changes
 					inputs[6] = 0
 					
-					# button was pressed
-					if cachedInputs[2] == 1:
-						# tts initialization
-						engine = pyttsx3.init()
-						engine.setProperty('rate', 100)    # Speed percent (can go over 100)
-						# SPEAK THE RESPONSE
-						engine.say(str("Connected. Welcome, agent."))
-						engine.runAndWait()
-		
-		# lever has changed
-		if inputs[5] == 1:
-			cachedInputs = inputs #cache the inputs to make sure they don't change
-			print("lever is now ", cachedInputs[1])
-			
-			# reset tracker of input changes
-			inputs[5] = 0
-		
-		# button has changed
-		if inputs[6] == 1:
-			cachedInputs = inputs #cache the inputs to make sure they don't change
-			print("button is now ", cachedInputs[2])
-			
-			# reset tracker of input changes
-			inputs[6] = 0
-	
+					# tts initialization
+					engine = pyttsx3.init()
+					engine.setProperty('rate', 100)    # Speed percent (can go over 100)
+					# SPEAK THE RESPONSE
+					engine.say("Connected. Welcome, agent.")
+					engine.runAndWait()
+					
+					# lever has changed
+					while inputs[5] == 1:
+						pass
+					cachedInputs = inputs #cache the inputs to make sure they don't change
+					print("lever is now ", cachedInputs[1])
+					# reset tracker of input changes
+					inputs[5] = 0
 	#recording.start()
 	sensing.join()
 	#recording.join()
