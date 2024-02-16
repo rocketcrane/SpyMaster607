@@ -142,7 +142,7 @@ def synthesis(transcription):
 			print(transcription.value)
 	
 def sensors(inputs):
-	oldInputs = inputs
+	oldInputs = 0
 	while True:
 		# read GPIO pins
 		try:
