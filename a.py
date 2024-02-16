@@ -129,9 +129,9 @@ def synthesis(transcription):
 	while True:
 		try:
 			stamp = os.stat("recording.mp3").st_mtime
+			print("last file changed time ", stamp)
 		except:
 			pass
-		print("last file changed time ", stamp)
 		# only transcribe if the file has changed
 		if stamp != oldStamp:
 			oldStamp = stamp
