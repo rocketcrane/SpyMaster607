@@ -257,9 +257,9 @@ if __name__ == '__main__':
 	sensing = Process(target=sensors, args=(inputs,))
 	recording = Process(target=record, args=(transcription,))
 	sensing.start()
-	recording.start()
+	#recording.start()
 	sensing.join()
-	recording.join()
+	#recording.join()
 	
 	# cleanup
 	audio.terminate()
