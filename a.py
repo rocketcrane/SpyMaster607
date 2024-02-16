@@ -24,6 +24,7 @@ import time
 import multiprocessing
 from ctypes import c_char_p
 from ctypes import c_uint8
+import pyttsx3
 load_dotenv()
 client = OpenAI()
 
@@ -136,6 +137,12 @@ def synthesis(transcription):
 	MP3_FILENAME = "recording"
 	index = 0
 	
+	# tts initialization
+	engine = pyttsx3.init()
+	
+	# Set properties _before_ you add things to say
+	engine.setProperty('rate', 50)    # Speed percent (can go over 100)
+	
 	while True:
 		try:
 			MP3_FILENAME_ALL = MP3_FILENAME + str(index) + ".mp3"
@@ -167,6 +174,8 @@ def synthesis(transcription):
 			)
 			response = output.choices[0].message.content
 			print("response: ", response)
+			engine.say(response)
+			engine.runAndWait()
 		except:
 			pass
 	
@@ -227,17 +236,6 @@ def sensors(inputs):
 				last_read = trim_pot
 		except:
 			pass
-
-def response(prompt, response):
-	output = client.chat.completions.create(
-		model="gpt-4-turbo-preview",
-		messages=[
-		{"role": "system", "content": "You are the spymaster of the world's best, most top secret spy organization. Mentor, teach, and support your spy through the spy walkie-talkie. Don't talk directly about who you are or your organization, be discreet but helpful, and be very concise."},
-		{"role": "user", "content": prompt}
-	  ]
-	)
-	response = output.choices[0].message.content
-	print("response: ", response)
 # --------------------------------------------------------------------------------
 
 # startup pyAudio
@@ -265,15 +263,12 @@ if __name__ == '__main__':
 	sensing = Process(target=sensors, args=(inputs,))
 	recording = Process(target=record)
 	synthesizing = Process(target=synthesis, args=(transcription,))
-	#responding = Process(target=response, args=(prompt, response))
 	sensing.start()
 	recording.start()
 	synthesizing.start()
-	#responding.start()
 	sensing.join()
 	recording.join()
 	synthesizing.join()
-	#responding.join()
-
+	
 	# cleanup
 	audio.terminate()
