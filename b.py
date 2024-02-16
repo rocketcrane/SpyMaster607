@@ -217,19 +217,19 @@ def sensors(inputs):
 				oldVol = inputs[0]
 				
 				oldBut = inputs[2]
-				print("volume switch is ", inputs[0])
+				# print("volume switch is ", inputs[0])
 				
 			# ditto if lever has changed
 			if oldLev != inputs[1]:
 				inputs[5] = 1 # let main code know of change
 				oldLev = inputs[1] # update values that keep track
-				print(" lever is ", inputs[1])
+				# print(" lever is ", inputs[1])
 			
 			# or if button has changed
 			if oldBut != inputs[2]:
 				inputs[6] = 1 # let main code know of change
 				oldBut = inputs[2] # update values that keep track
-				print(" button is ", inputs[2])
+				# print(" button is ", inputs[2])
 		except:
 			pass
 				
@@ -250,7 +250,7 @@ def sensors(inputs):
 				# convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
 				inputs[3] = remap_range(trim_pot, 0, 65535, 0, 100)
 				# set OS volume playback volume
-				print('Volume = {volume}%' .format(volume = inputs[3]))
+				# print('Volume = {volume}%' .format(volume = inputs[3]))
 				#set_vol_cmd = 'sudo amixer cset numid=1 -- {volume}% > /dev/null' \
 				#.format(volume = inputs[3])
 				#os.system(set_vol_cmd)
@@ -300,6 +300,14 @@ if __name__ == '__main__':
 			
 			# reset tracker of input changes
 			inputs[6] = 0
+		
+		# potentiometer has changed
+		if inputs[7] == 1:
+			cachedInputs = inputs #cache the inputs to make sure they don't change
+			print("potentiometer is now ", cachedInputs[3])
+			
+			# reset tracker of input changes
+			inputs[7] = 0
 	
 	#recording.start()
 	sensing.join()
