@@ -22,6 +22,7 @@ import pyaudio
 import pydub
 import wave
 import time
+import random
 import math
 import multiprocessing
 from ctypes import c_char_p
@@ -197,7 +198,7 @@ def sensors(inputs):
 	oldBut = 0
 	
 	last_read = 0       # this keeps track of the last potentiometer value
-	tolerance = 50     # to keep from being jittery we'll only change
+	tolerance = 100     # to keep from being jittery we'll only change
 	# volume when the pot has moved a significant amount
 	# on a 16-bit ADC
 	
@@ -270,8 +271,8 @@ def sensors(inputs):
 # --------------------------------------------------------------------------------
 
 # only run PyAudio if we need it
-AUDIO = False
-#AUDIO = True
+#AUDIO = False
+AUDIO = True
 
 if AUDIO:
 	# startup pyAudio
@@ -295,9 +296,17 @@ if __name__ == '__main__':
 		if inputs[4] == 1:
 			cachedInputs = inputs #cache the inputs to make sure they don't change
 			print("volume is now ", cachedInputs[0])
-			
 			# reset tracker of input changes
 			inputs[4] = 0
+			
+			if cachedInputs[0] == 1:
+				spyMasterChannel = int(random.random()*100)
+				# tts initialization
+				engine = pyttsx3.init()
+				engine.setProperty('rate', 100)    # Speed percent (can go over 100)
+				# SPEAK THE RESPONSE
+				engine.say(str("Connect to HQ at "+str(spyMasterChannel)))
+				engine.runAndWait()
 		
 		# lever has changed
 		if inputs[5] == 1:
@@ -318,7 +327,7 @@ if __name__ == '__main__':
 		# potentiometer has changed
 		if inputs[7] == 1:
 			cachedInputs = inputs #cache the inputs to make sure they don't change
-			print("potentiometer is now ", cachedInputs[3])
+			# print("potentiometer is now ", cachedInputs[3])
 			
 			# reset tracker of input changes
 			inputs[7] = 0
