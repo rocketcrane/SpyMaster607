@@ -158,7 +158,9 @@ def sensors(inputs):
 				inputs[2] = 0
 			elif GPIO.input(but) == GPIO.LOW:
 				inputs[2] = 1
+			# only record and print if the inputs have changed
 			if oldInputs != inputs:
+				oldInputs = inputs
 				print("volume switch is ", inputs[0], " lever is ", inputs[1], " button is ", inputs[2])
 		except:
 			pass
