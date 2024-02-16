@@ -126,6 +126,7 @@ def record():
 	
 def synthesis(transcription):
 	oldStamp = 0
+	stamp = 0
 	while True:
 		try:
 			stamp = os.stat("recording.mp3").st_mtime
