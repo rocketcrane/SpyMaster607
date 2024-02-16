@@ -270,14 +270,15 @@ if __name__ == '__main__':
 	while True:
 		# some input has changed
 		if inputs[4] == 1:
+			cachedInputs = inputs
 			print("old volSwitch ", oldInputs[0]," new ", inputs[0])
-			if inputs[0] != oldInputs[0]:
+			if cachedInputs[0] != oldInputs[0]:
 				print("vol button on")
 			
 			# reset tracker of input changes
 			inputs[4] = 0
 			# update tracker of old inputs
-			oldInputs = inputs
+			oldInputs = cachedInputs
 	
 	#recording.start()
 	sensing.join()
