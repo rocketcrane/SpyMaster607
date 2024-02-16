@@ -319,7 +319,7 @@ if __name__ == '__main__':
 					
 					if cachedInputs[3]/10 > spyMasterChannel:
 						# SPEAK THE RESPONSE
-						engine.say(str("Connected")
+						engine.say(str("Connected"))
 						engine.runAndWait()
 		
 		# lever has changed
