@@ -138,7 +138,7 @@ def synthesis(transcription):
 		if stamp != oldStamp:
 			oldStamp = stamp
 			# transcribe audio with OpenAI whisper and save
-			current_transcription = transcribe_audio(Path(__file__).parent / MP3_FILENAME, transcription.value)
+			current_transcription = transcribe_audio(open(MP3_FILENAME, "rb"), transcription.value)
 			transcription.value += " " # add a space for readability
 			transcription.value += current_transcription
 			print(transcription.value)
