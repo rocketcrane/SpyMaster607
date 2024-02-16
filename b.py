@@ -269,7 +269,7 @@ if __name__ == '__main__':
 	
 	while True:
 		# some input has changed
-		if inputs[4] = 1:
+		if inputs[4] == 1:
 			# reset tracker of input changes
 			inputs[4] = 0
 			
