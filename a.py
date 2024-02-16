@@ -15,11 +15,14 @@ from pathlib import Path
 from openai import OpenAI
 from dotenv import load_dotenv
 from time import sleep
+from multiprocessing import Process
 import os
 import pyaudio
 import pydub
 import wave
 import time
+import multiprocessing
+from ctypes import c_char_p
 load_dotenv()
 client = OpenAI()
 
@@ -36,13 +39,6 @@ CHUNK = 1024
 RECORD_SECONDS = 5
 OUTPUT_FILENAME = "recording.wav"
 MP3_FILENAME = "recording.mp3"
-
-# delete old recordings - might prevent recording issues
-try:
-	os.remove("recording.mp3")
-	os.remove("recording.wav")
-except:
-	print("No recordings to delete.")
 
 try:
 	# GPIO & potentiometer setup	
@@ -66,7 +62,7 @@ try:
 						# volume when the pot has moved a significant amount
 						# on a 16-bit ADC
 except:
-	print("not on Pi")
+	pass
 
 # ------------------------------------FUNCTIONS----------------------------------
 # speech-to-text, uses previous transcription for context
@@ -102,20 +98,69 @@ def remap_range(value, left_min, left_max, right_min, right_max):
 		
 		# Convert the 0-1 range into a value in the right range.
 		return int(right_min + (valueScaled * right_span))
+		
+def record(transcription):
+	# recording
+	stream = audio.open(format=FORMAT, channels=CHANNELS,
+						rate=RATE, input=True, input_device_index=DEVICE,
+						frames_per_buffer=CHUNK)
+	frames = []
+	print("Recording started...")
+	for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+		data = stream.read(CHUNK)
+		frames.append(data)
+	print("Recording finished.")
+	
+	# stop stream - might prevent pyAudio issues
+	stream.stop_stream()
+	stream.close()
+	
+	# generate .wav file
+	with wave.open(OUTPUT_FILENAME, 'wb') as wf:
+		wf.setnchannels(CHANNELS)
+		wf.setsampwidth(audio.get_sample_size(FORMAT))
+		wf.setframerate(RATE)
+		wf.writeframes(b''.join(frames))
+	
+	# convert .wav to .mp3
+	mp3 =  pydub.AudioSegment.from_wav("recording.wav")
+	mp3.export("recording.mp3", format="mp3")
+	
+	# transcribe audio with OpenAI whisper and save
+	current_transcription = transcribe_audio(Path(__file__).parent / MP3_FILENAME, transcription.value)
+	transcription.value += " " # add a space for readability
+	transcription.value += current_transcription
+	print(transcription.value)
 # --------------------------------------------------------------------------------
 
-# start transcription with current time
-transcription = str(datetime.now())
+# buttons and volume global variables
+volSwitch = False
+lever = False
+button = False
+set_volume = 0
 # startup pyAudio
 audio = pyaudio.PyAudio()
 
-# are we using the right pyaudio device?
-list_input_device(audio)
-print("using device", DEVICE)
-
-# main loop
-while True:
-	# read GPIO pins
+if __name__ == '__main__':
+	# start transcription with current time
+	manager = multiprocessing.Manager()
+	transcription = manager.Value(c_char_p, str(datetime.now()))
+	
+	# delete old recordings - might prevent recording issues
+	try:
+		os.remove("recording.mp3")
+		os.remove("recording.wav")
+	except:
+		pass
+		# print("No recordings to delete.")
+	
+	# are we using the right pyaudio device?
+	list_input_device(audio)
+	print("using device", DEVICE)
+	
+	# main loop
+	#while True:
+		# read GPIO pins
 	try:
 		if GPIO.input(vol) == GPIO.HIGH:
 			volSwitch = False
@@ -131,8 +176,8 @@ while True:
 			button = True
 		print("volume switch is ", volSwitch, " lever is ", lever, " button is ", button)
 	except:
-		print("not on Pi")
-	
+		pass
+			
 	# read potentiometer
 	try:
 		# we'll assume that the pot didn't move
@@ -148,45 +193,18 @@ while True:
 			set_volume = remap_range(trim_pot, 0, 65535, 0, 100)
 			# set OS volume playback volume
 			print('Volume = {volume}%' .format(volume = set_volume))
-			set_vol_cmd = 'sudo amixer cset numid=1 -- {volume}% > /dev/null' \
-			.format(volume = set_volume)
-			os.system(set_vol_cmd)
+			#set_vol_cmd = 'sudo amixer cset numid=1 -- {volume}% > /dev/null' \
+			#.format(volume = set_volume)
+			#os.system(set_vol_cmd)
 			# save the potentiometer reading for the next loop
 			last_read = trim_pot
 	except:
-		print("not on Pi")
-	
-	# recording
-	stream = audio.open(format=FORMAT, channels=CHANNELS,
-						rate=RATE, input=True, input_device_index=DEVICE,
-						frames_per_buffer=CHUNK)
-	frames = []
-	print("Recording started...")
-	for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
-		data = stream.read(CHUNK)
-		frames.append(data)
-	print("Recording finished.")
-	
-	# stop stream - might prevent pyAudio issues
-	stream.stop_stream()
-	stream.close()
+		pass
+		
+	recording = Process(target=record, args=(transcription,))
+	if not recording.is_alive():
+		recording.start()
+	recording.join()
 
-	# generate .wav file
-	with wave.open(OUTPUT_FILENAME, 'wb') as wf:
-		wf.setnchannels(CHANNELS)
-		wf.setsampwidth(audio.get_sample_size(FORMAT))
-		wf.setframerate(RATE)
-		wf.writeframes(b''.join(frames))
-
-	# convert .wav to .mp3
-	mp3 =  pydub.AudioSegment.from_wav("recording.wav")
-	mp3.export("recording.mp3", format="mp3")
-	
-	# transcribe audio with OpenAI whisper and save
-	current_transcription = transcribe_audio(Path(__file__).parent / MP3_FILENAME, transcription)
-	transcription += " " # add a space for readability
-	transcription += current_transcription
-	print(transcription)
-
-# cleanup
-audio.terminate()
+	# cleanup
+	audio.terminate()
