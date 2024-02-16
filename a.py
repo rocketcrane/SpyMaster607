@@ -1,3 +1,10 @@
+RECORD_SECONDS = 5
+WHISPER_TEMP = 0
+WHISPER_CONTEXT_LENGTH = 400 # context characters to feed into whisper
+
+from datetime import datetime
+from pathlib import Path
+
 import openai
 
 import os
