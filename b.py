@@ -169,7 +169,7 @@ def record(transcription):
 			output = client.chat.completions.create(
 				model="gpt-4-turbo-preview",
 				messages=[
-				{"role": "system", "content": "You are the spymaster of the world's best, most top secret spy organization. Mentor, teach, and support your spy through the spy walkie-talkie. Don't talk directly about who you are or your organization, be discreet but helpful, and be very concise."},
+				{"role": "system", "content": "You are the spymaster of the world's best, most top secret spy organization. Mentor, teach, and support your spy through the spy walkie-talkie. Don't talk directly about who you are or your organization, be discreet but helpful, and be very concise, because your response will be read out loud."},
 				{"role": "user", "content": transcription.value}
 			  ]
 			)
@@ -208,8 +208,12 @@ def sensors(inputs):
 				inputs[2] = 0
 			elif GPIO.input(but) == GPIO.LOW:
 				inputs[2] = 1
-			# only print if the volume switch changed
+			# do stuff if the volume switch changed
 			if oldVol != inputs[0] or oldLev != inputs[1] or oldBut != inputs[2]:
+				# let the main code know the input has changed
+				inputs[4] = 1
+				
+				# update values that keep track of changes
 				oldVol = inputs[0]
 				oldLev = inputs[1]
 				oldBut = inputs[2]
@@ -228,6 +232,9 @@ def sensors(inputs):
 			if pot_adjust > tolerance:
 				trim_pot_changed = True
 			if trim_pot_changed:
+				# let the main code know the input has changed
+				inputs[4] = 1
+				
 				# convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
 				inputs[3] = remap_range(trim_pot, 0, 65535, 0, 100)
 				# set OS volume playback volume
@@ -250,12 +257,27 @@ if __name__ == '__main__':
 	transcription = manager.Value(c_char_p, str(datetime.now()))
 	
 	# set the buttons and volume
-	inputs = multiprocessing.Array('d', 4)
+	inputs = multiprocessing.Array('d', 5)
 	
 	# main loop
 	sensing = Process(target=sensors, args=(inputs,))
 	recording = Process(target=record, args=(transcription,))
 	sensing.start()
+	
+	# keep track of old inputs
+	oldInputs = inputs
+	
+	while True:
+		# some input has changed
+		if inputs[4] = 1:
+			# reset tracker of input changes
+			inputs[4] = 0
+			
+			# update tracker of old inputs
+			oldInputs = inputs
+			
+			print("something has changed!")
+	
 	#recording.start()
 	sensing.join()
 	#recording.join()
