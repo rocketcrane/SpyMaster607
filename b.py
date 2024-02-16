@@ -64,7 +64,7 @@ def list_input_device(p):
 
 def remap_range(value, left_min, left_max, right_min, right_max):
 	# log addition
-	log_left_min = math.log(left_min + 1e-9)
+	log_left_min = math.log(left_min + 1e-2)
 	log_left_max = math.log(left_max)
 	log_value = math.log(value)
 	
@@ -74,7 +74,7 @@ def remap_range(value, left_min, left_max, right_min, right_max):
 	right_span = right_max - right_min
 	
 	# Convert the left range into a 0-1 range (int)
-	valueScaled = float(log_value - log_left_min) / float(left_span)
+	valueScaled = int(log_value - log_left_min) / int(left_span)
 	
 	# Convert the 0-1 range into a value in the right range.
 	return double(right_min + (valueScaled * right_span))
