@@ -125,6 +125,7 @@ def record():
 		mp3.export("recording.mp3", format="mp3")
 	
 def synthesis(transcription):
+	MP3_FILENAME = "recording.mp3"
 	oldStamp = 0
 	stamp = 0
 	while True:
