@@ -254,7 +254,7 @@ def sensors(inputs):
 				inputs[7] = 1
 				
 				# convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
-				inputs[3] = remap_range(trim_pot, 0, 65535, 0, 100)
+				inputs[3] = remap_range(trim_pot, 0, 100000, 0, 100)
 				# set OS volume playback volume
 				# print('Volume = {volume}%' .format(volume = inputs[3]))
 				#set_vol_cmd = 'sudo amixer cset numid=1 -- {volume}% > /dev/null' \
