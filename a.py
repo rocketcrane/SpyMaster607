@@ -134,46 +134,47 @@ def record(transcription):
 	print(transcription.value)
 	
 def sensors(inputs):
-	# read GPIO pins
-	try:
-		if GPIO.input(vol) == GPIO.HIGH:
-			inputs[0] = 0
-		elif GPIO.input(vol) == GPIO.LOW:
-			inputs[0] = 1
-		if GPIO.input(lev) == GPIO.HIGH:
-			inputs[1] = 0
-		elif GPIO.input(lev) == GPIO.LOW:
-			inputs[1] = 1
-		if GPIO.input(but) == GPIO.HIGH:
-			inputs[2] = 0
-		elif GPIO.input(but) == GPIO.LOW:
-			inputs[2] = 1
-		print("volume switch is ", inputs[0], " lever is ", inputs[1], " button is ", inputs[2])
-	except:
-		pass
-			
-	# read potentiometer
-	try:
-		# we'll assume that the pot didn't move
-		trim_pot_changed = False
-		# read the analog pin
-		trim_pot = chan0.value
-		# how much has it changed since the last read?
-		pot_adjust = abs(trim_pot - last_read)
-		if pot_adjust > tolerance:
-			trim_pot_changed = True
-		if trim_pot_changed:
-			# convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
-			inputs[3] = remap_range(trim_pot, 0, 65535, 0, 100)
-			# set OS volume playback volume
-			print('Volume = {volume}%' .format(volume = inputs[3]))
-			#set_vol_cmd = 'sudo amixer cset numid=1 -- {volume}% > /dev/null' \
-			#.format(volume = inputs[3])
-			#os.system(set_vol_cmd)
-			# save the potentiometer reading for the next loop
-			last_read = trim_pot
-	except:
-		pass
+	while True:
+		# read GPIO pins
+		try:
+			if GPIO.input(vol) == GPIO.HIGH:
+				inputs[0] = 0
+			elif GPIO.input(vol) == GPIO.LOW:
+				inputs[0] = 1
+			if GPIO.input(lev) == GPIO.HIGH:
+				inputs[1] = 0
+			elif GPIO.input(lev) == GPIO.LOW:
+				inputs[1] = 1
+			if GPIO.input(but) == GPIO.HIGH:
+				inputs[2] = 0
+			elif GPIO.input(but) == GPIO.LOW:
+				inputs[2] = 1
+			print("volume switch is ", inputs[0], " lever is ", inputs[1], " button is ", inputs[2])
+		except:
+			pass
+				
+		# read potentiometer
+		try:
+			# we'll assume that the pot didn't move
+			trim_pot_changed = False
+			# read the analog pin
+			trim_pot = chan0.value
+			# how much has it changed since the last read?
+			pot_adjust = abs(trim_pot - last_read)
+			if pot_adjust > tolerance:
+				trim_pot_changed = True
+			if trim_pot_changed:
+				# convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
+				inputs[3] = remap_range(trim_pot, 0, 65535, 0, 100)
+				# set OS volume playback volume
+				print('Volume = {volume}%' .format(volume = inputs[3]))
+				#set_vol_cmd = 'sudo amixer cset numid=1 -- {volume}% > /dev/null' \
+				#.format(volume = inputs[3])
+				#os.system(set_vol_cmd)
+				# save the potentiometer reading for the next loop
+				last_read = trim_pot
+		except:
+			pass
 # --------------------------------------------------------------------------------
 
 # startup pyAudio
