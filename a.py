@@ -128,14 +128,15 @@ def synthesis(transcription):
 	oldStamp = 0
 	stamp = 0
 	while True:
+		# find out when the file has been changed
 		try:
 			stamp = os.stat("recording.mp3").st_mtime
-			print("last file changed time ", stamp)
 		except:
 			pass
 		# only transcribe if the file has changed
 		if stamp != oldStamp:
 			oldStamp = stamp
+			print("last file changed time ", stamp)
 			try:
 				audio_file = open("recording.mp3", 'rb')
 				# transcribe audio with OpenAI whisper and save
