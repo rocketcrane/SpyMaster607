@@ -142,14 +142,16 @@ def synthesis(transcription):
 			print(transcription.value)
 	
 def sensors(inputs):
-	oldInputs = 0
+	oldVolumeBoolean = False
 	while True:
 		# read GPIO pins
 		try:
 			if GPIO.input(vol) == GPIO.HIGH:
 				inputs[0] = 0
+				volumeBoolean = False
 			elif GPIO.input(vol) == GPIO.LOW:
 				inputs[0] = 1
+				volumeBoolean = True
 			if GPIO.input(lev) == GPIO.HIGH:
 				inputs[1] = 1
 			elif GPIO.input(lev) == GPIO.LOW:
@@ -158,9 +160,9 @@ def sensors(inputs):
 				inputs[2] = 0
 			elif GPIO.input(but) == GPIO.LOW:
 				inputs[2] = 1
-			# only print if the inputs have changed
-			if oldInputs != inputs:
-				oldInputs = inputs
+			# only print if the volume switch changed
+			if oldVolumeBoolean != volumeBoolean:
+				oldVolumeBoolean = volumeBoolean
 				print("volume switch is ", inputs[0], " lever is ", inputs[1], " button is ", inputs[2])
 		except:
 			pass
