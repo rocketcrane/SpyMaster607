@@ -1,4 +1,4 @@
 .DS_Store
 .env
-recording.mp3
+recording*.mp3
 recording.wav

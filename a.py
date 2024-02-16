@@ -154,20 +154,23 @@ def synthesis(transcription):
 			pass
 	
 def sensors(inputs):
-	oldVolumeBoolean = False # keeps track of the volume switch
+	# keeps tracks of the buttons
+	oldVol = 0
+	oldLev = 0
+	oldBut = 0
+	
 	last_read = 0       # this keeps track of the last potentiometer value
 	tolerance = 250     # to keep from being jittery we'll only change
 	# volume when the pot has moved a significant amount
 	# on a 16-bit ADC
+	
 	while True:
 		# read GPIO pins
 		try:
 			if GPIO.input(vol) == GPIO.HIGH:
 				inputs[0] = 0
-				volumeBoolean = False
 			elif GPIO.input(vol) == GPIO.LOW:
 				inputs[0] = 1
-				volumeBoolean = True
 			if GPIO.input(lev) == GPIO.HIGH:
 				inputs[1] = 1
 			elif GPIO.input(lev) == GPIO.LOW:
@@ -177,8 +180,10 @@ def sensors(inputs):
 			elif GPIO.input(but) == GPIO.LOW:
 				inputs[2] = 1
 			# only print if the volume switch changed
-			if oldVolumeBoolean != volumeBoolean:
-				oldVolumeBoolean = volumeBoolean
+			if oldVol != inputs[0] or oldLev != inputs[1] or oldBut != inputs[2]:
+				oldVol = inputs[0]
+				oldLev = inputs[1]
+				oldBut = inputs[2]
 				print("volume switch is ", inputs[0], " lever is ", inputs[1], " button is ", inputs[2])
 		except:
 			pass
@@ -223,7 +228,6 @@ if __name__ == '__main__':
 		os.remove("recording.wav")
 	except:
 		pass
-		# print("No recordings to delete.")
 	
 	# main loop
 	#while True:
