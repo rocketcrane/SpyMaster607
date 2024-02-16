@@ -273,10 +273,11 @@ if __name__ == '__main__':
 			# reset tracker of input changes
 			inputs[4] = 0
 			
+			if inputs[0] != oldInputs[0]:
+				print("vol button on")
+			
 			# update tracker of old inputs
 			oldInputs = inputs
-			
-			print("something has changed!")
 	
 	#recording.start()
 	sensing.join()
