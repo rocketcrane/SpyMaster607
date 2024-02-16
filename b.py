@@ -25,6 +25,7 @@ import time
 import random
 import math
 import multiprocessing
+import playsound
 from ctypes import c_char_p
 from ctypes import c_uint8
 load_dotenv()
@@ -187,10 +188,16 @@ def record(transcription, responses, change):
 			responses.value = response
 			change[0] = 1
 			
-			engine.setProperty('rate', 150)    # Speed percent (can go over 100)
-			# SPEAK THE RESPONSE
-			engine.say(str(responses.value))
-			engine.runAndWait()
+			# speak
+			speech_file_path = Path(__file__).parent / "speech.mp3"
+			response = client.audio.speech.create(
+			  model="tts-1",
+			  voice="onyx",
+			  input=response
+			)
+			response.stream_to_file(speech_file_path)
+			
+			playsound.playsound('speech.mp3', True)
 		except:
 			pass
 	
@@ -318,7 +325,7 @@ if __name__ == '__main__':
 			engine = pyttsx3.init()
 			engine.setProperty('rate', 100)    # Speed percent (can go over 100)
 			
-			spyMasterChannel = int(random.random()*100)
+			spyMasterChannel = int(random.randrange(30,80))
 			
 			# SPEAK THE RESPONSE
 			engine.say(str("Connect to HQ at "+str(spyMasterChannel)))
