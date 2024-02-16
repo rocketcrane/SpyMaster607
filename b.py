@@ -280,7 +280,7 @@ if __name__ == '__main__':
 	# start transcription with current time
 	manager = multiprocessing.Manager()
 	transcription = manager.Value(c_char_p, str(datetime.now()))
-	response = manager.Value(c_char_p, " ")
+	responses = manager.Value(c_char_p, " ")
 	change = multiprocessing.Array('d', 1)
 	
 	# set the buttons and volume
