@@ -99,6 +99,15 @@ def record(transcription):
 		# tts initialization
 		engine = pyttsx3.init()
 		
+		voices = engine.getProperty('voices')
+		for voice in voices:
+			print("Voice:")
+			print(" - ID: %s" % voice.id)
+			print(" - Name: %s" % voice.name)
+			print(" - Languages: %s" % voice.languages)
+			print(" - Gender: %s" % voice.gender)
+			print(" - Age: %s" % voice.age)
+		
 		# Set properties _before_ you add things to say
 		engine.setProperty('rate', 100)    # Speed percent (can go over 100)
 	except:
@@ -240,18 +249,8 @@ if __name__ == '__main__':
 	manager = multiprocessing.Manager()
 	transcription = manager.Value(c_char_p, str(datetime.now()))
 	
-	# set up the prompt
-	prompt = manager.Value(c_char_p, transcription.value)
-	response = manager.Value(c_char_p, str())
-	
 	# set the buttons and volume
 	inputs = multiprocessing.Array('d', 4)
-	
-	# delete old recordings - might prevent recording issues
-	try:
-		os.remove("recording.wav")
-	except:
-		pass
 	
 	# main loop
 	sensing = Process(target=sensors, args=(inputs,))
