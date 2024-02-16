@@ -72,7 +72,7 @@ def remap_range(value, left_min, left_max, right_min, right_max):
 	valueScaled = float(value - left_min) / float(left_span)
 	
 	# Convert the 0-1 range into a value in the right range.
-	return float(right_min + (valueScaled * right_span))
+	return double(right_min + (valueScaled * right_span))
 		
 def record(transcription):
 	# recording config
@@ -249,7 +249,7 @@ def sensors(inputs):
 				inputs[7] = 1
 				
 				# convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
-				inputs[3] = remap_range_logarithmic(trim_pot, 0, 65535, 0, 100)
+				inputs[3] = remap_range(trim_pot, 0, 65535, 0, 100)
 				# set OS volume playback volume
 				# print('Volume = {volume}%' .format(volume = inputs[3]))
 				#set_vol_cmd = 'sudo amixer cset numid=1 -- {volume}% > /dev/null' \
