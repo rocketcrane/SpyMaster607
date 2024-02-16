@@ -104,10 +104,8 @@ def record(transcription):
 	WHISPER_TEMP = 0
 	WHISPER_CONTEXT_LENGTH = 400 # context characters to feed into whisper
 	
+	'''
 	try:
-		# tts initialization
-		engine = pyttsx3.init()
-		
 		voices = engine.getProperty('voices')
 		for voice in voices:
 			print("Voice:")
@@ -116,11 +114,9 @@ def record(transcription):
 			print(" - Languages: %s" % voice.languages)
 			print(" - Gender: %s" % voice.gender)
 			print(" - Age: %s" % voice.age)
-		
-		# Set properties _before_ you add things to say
-		engine.setProperty('rate', 100)    # Speed percent (can go over 100)
 	except:
 		pass
+		'''
 	
 	while True:
 		# recording
@@ -184,6 +180,11 @@ def record(transcription):
 			)
 			response = output.choices[0].message.content
 			print("response: ", response)
+			
+			# tts initialization
+			engine = pyttsx3.init()
+			# Set properties _before_ you add things to say
+			engine.setProperty('rate', 100)    # Speed percent (can go over 100)
 			
 			# SPEAK THE RESPONSE
 			engine.say(response)
