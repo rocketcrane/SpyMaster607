@@ -265,7 +265,7 @@ if __name__ == '__main__':
 	sensing.start()
 	
 	# keep track of old inputs
-	oldInputs = inputs
+	oldInputs = multiprocessing.Array('d', 5)
 	
 	while True:
 		# some input has changed
