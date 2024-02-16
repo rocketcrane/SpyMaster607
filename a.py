@@ -254,7 +254,7 @@ if __name__ == '__main__':
 	sensing = Process(target=sensors, args=(inputs,))
 	recording = Process(target=record)
 	synthesizing = Process(target=synthesis, args=(transcription,))
-	responding = Process(target=response(prompt, response))
+	responding = Process(target=response, args=(prompt, response))
 	sensing.start()
 	recording.start()
 	synthesizing.start()
