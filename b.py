@@ -29,6 +29,8 @@ import playsound
 import pygame
 from ctypes import c_char_p
 from ctypes import c_uint8
+from pydub import AudioSegment
+from pydub.playback import play
 load_dotenv()
 client = OpenAI()
 
@@ -198,11 +200,8 @@ def record(transcription, responses, change):
 			)
 			response.stream_to_file(speech_file_path)
 			
-			pygame.mixer.init()
-			pygame.mixer.music.load("speech.mp3")
-			pygame.mixer.music.play()
-			while pygame.mixer.music.get_busy() == True:
-			   continue
+			sound = AudioSegment.from_mp3('speech.mp3')
+			play(sound)
 		except:
 			pass
 	
