@@ -1,39 +1,40 @@
-# TODO: logarithmic potentiometer
-
-try:
-	import RPi.GPIO as GPIO
-	import adafruit_mcp3xxx.mcp3008 as MCP
-	import busio
-	import digitalio
-	import board
-	from adafruit_mcp3xxx.analog_in import AnalogIn
-	import pyttsx3
-except:
-	print("not on Pi")
-
 from datetime import datetime
 from pathlib import Path
 from openai import OpenAI
 from dotenv import load_dotenv
 from time import sleep
 from multiprocessing import Process
+from ctypes import c_char_p
 import os
 import pyaudio
 import pydub
 import wave
-import time
 import random
 import math
+import logging
 import multiprocessing
-from ctypes import c_char_p
-from ctypes import c_uint8
-from pydub import AudioSegment
-from pydub.playback import play
-load_dotenv()
-client = OpenAI()
+import pyttsx3
+
+logging.setLevel(INFO) # set logging level
 
 try:
-	# GPIO & potentiometer setup	
+	from adafruit_mcp3xxx.analog_in import AnalogIn
+	import RPi.GPIO as GPIO
+	import adafruit_mcp3xxx.mcp3008 as MCP
+	import busio
+	import digitalio
+	import board
+except:
+	logging.warning("Import failed, probably not on RPi")
+
+# initialize AI
+load_dotenv() # .env file for API key
+client = OpenAI()
+audio = pyaudio.PyAudio() # initialize audio
+engine = pyttsx3.init() # initialize text to speech
+
+# GPIO & potentiometer setup, Raspberry Pi only
+try:	
 	GPIO.setmode(GPIO.BCM)
 	# pin numbers for buttons/switches
 	vol = 16
@@ -42,28 +43,22 @@ try:
 	GPIO.setup(vol, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 	GPIO.setup(lev, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 	GPIO.setup(but, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-	# create the SPI bus
-	spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
-	# create the CS (chip select)
-	cs = digitalio.DigitalInOut(board.D22)
-	# create the MCP object
-	mcp = MCP.MCP3008(spi, cs)
-	# create an analog input channel on pin 0
-	chan0 = AnalogIn(mcp, MCP.P0)
+	spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI) # create the SPI bus
+	cs = digitalio.DigitalInOut(board.D22) # create the CS (chip select)
+	mcp = MCP.MCP3008(spi, cs) # create the MCP object
+	chan0 = AnalogIn(mcp, MCP.P0) # create an analog input channel on pin 0
 except:
-	pass
+	logging.warning("IO not setup, probably not on RPi")
 
 # ------------------------------------FUNCTIONS----------------------------------
 # list input devices, p = pyAudio instance
 def list_input_device(p):
 	nDevices = p.get_device_count()
-	print('Found input devices:')
+	logging.debug('Found input devices:')
 	for i in range(nDevices):
 		deviceInfo = p.get_device_info_by_index(i)
 		devName = deviceInfo['name']
-		print(f"Device ID {i}: {devName}")
-		# print("Device Info: ")
-		# print(deviceInfo)
+		logging.debug(f"Device ID {i}: {devName}")
 
 def remap_range(value, left_min, left_max, right_min, right_max):
 	# log addition
@@ -85,7 +80,7 @@ def remap_range(value, left_min, left_max, right_min, right_max):
 	return float(right_min + (valueScaled * right_span))
 		
 def record(transcription, responses, change):
-	# recording config
+	# recording configuration
 	DEVICE = 0
 	FORMAT = pyaudio.paInt32
 	CHANNELS = 1
@@ -95,30 +90,15 @@ def record(transcription, responses, change):
 	OUTPUT_FILENAME = "recording.wav"
 	MP3_FILENAME = "recording"
 	
-	# are we using the right pyaudio device?
-	list_input_device(audio)
-	print("using device", DEVICE)
-	
-	# start index at 0
-	index = 0
-	
-	# whisper config
+	# whisper configuration
 	WHISPER_TEMP = 0
 	WHISPER_CONTEXT_LENGTH = 400 # context characters to feed into whisper
 	
-	'''
-	try:
-		voices = engine.getProperty('voices')
-		for voice in voices:
-			print("Voice:")
-			print(" - ID: %s" % voice.id)
-			print(" - Name: %s" % voice.name)
-			print(" - Languages: %s" % voice.languages)
-			print(" - Gender: %s" % voice.gender)
-			print(" - Age: %s" % voice.age)
-	except:
-		pass
-		'''
+	# are we using the right PyAudio device?
+	list_input_device(audio)
+	logging.debug("using device", DEVICE)
+	
+	index = 0 # start recording mp3 index at 0
 	
 	while True:
 		# recording
@@ -126,13 +106,13 @@ def record(transcription, responses, change):
 							rate=RATE, input=True, input_device_index=DEVICE,
 							frames_per_buffer=CHUNK)
 		frames = []
-		print("Recording started...")
+		logging.info("Recording started...")
 		for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
 			data = stream.read(CHUNK)
 			frames.append(data)
-		print("Recording finished.")
+		logging.info("Recording finished.")
 		
-		# stop stream - might prevent pyAudio issues
+		# stop stream - might prevent PyAudio issues
 		stream.stop_stream()
 		stream.close()
 		
@@ -144,20 +124,12 @@ def record(transcription, responses, change):
 			wf.writeframes(b''.join(frames))
 		
 		# convert .wav to .mp3
-		MP3_FILENAME_ALL = MP3_FILENAME + ".mp3"
+		MP3_FILENAME_ALL = MP3_FILENAME + index + ".mp3"
 		mp3 =  pydub.AudioSegment.from_wav(OUTPUT_FILENAME)
 		mp3.export(MP3_FILENAME_ALL, format="mp3")
-		
-		# remove .wav file
-		'''
-		try:
-			os.remove("recording.wav")
-		except:
-			pass
-		'''
 	
 		try:
-			MP3_FILENAME_ALL = MP3_FILENAME + ".mp3"
+			MP3_FILENAME_ALL = MP3_FILENAME + index + ".mp3"
 			audio_file = open(MP3_FILENAME_ALL, 'rb')
 			# transcribe audio with OpenAI whisper and save
 			current_transcription = client.audio.transcriptions.create(model="whisper-1", 
@@ -166,13 +138,10 @@ def record(transcription, responses, change):
 																response_format="text")
 			transcription.value += " " # add a space for readability
 			transcription.value = current_transcription
-			print("transcription:", transcription.value)
+			logging.info("transcription:", transcription.value)
 			
-			# increment index
-			index = index + 1
-			
-			# remove the file
-			#os.remove(MP3_FILENAME_ALL)
+			index = index + 1 # increment mp3 index
+			os.remove(MP3_FILENAME_ALL) # remove the file
 			
 			# response
 			output = client.chat.completions.create(
@@ -183,7 +152,7 @@ def record(transcription, responses, change):
 			  ]
 			)
 			response = output.choices[0].message.content
-			print("response: ", response)
+			logging.info("response: ", response)
 			
 			# save responses and set changed variable
 			responses.value = response
@@ -233,31 +202,23 @@ def sensors(inputs):
 				inputs[2] = 1
 			# do stuff if the volume switch changed
 			if oldVol != inputs[0]:
-				# let the main code know the switch has changed
-				inputs[4] = 1
-				
-				# update values that keep track of changes
-				oldVol = inputs[0]
-				
-				oldBut = inputs[2]
-				# print("volume switch is ", inputs[0])
+				inputs[4] = 1 # let the main code know the switch has changed
+				oldVol = inputs[0] # update values that keep track of changes
+				logging.debug("volume switch is ", inputs[0])
 				
 			# ditto if lever has changed
 			if oldLev != inputs[1]:
 				inputs[5] = 1 # let main code know of change
 				oldLev = inputs[1] # update values that keep track
-				# print(" lever is ", inputs[1])
+				logging.debug(" lever is ", inputs[1])
 			
 			# or if button has changed
 			if oldBut != inputs[2]:
 				inputs[6] = 1 # let main code know of change
 				oldBut = inputs[2] # update values that keep track
-				# print(" button is ", inputs[2])
-		except:
-			pass
+				logging.debug(" button is ", inputs[2])
 				
-		# read potentiometer
-		try:
+			# read potentiometer
 			# we'll assume that the pot didn't move
 			trim_pot_changed = False
 			# read the analog pin
@@ -271,125 +232,75 @@ def sensors(inputs):
 				inputs[7] = 1
 				
 				# convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
-				#print(trim_pot)
+				logging.debug("potentiometer is ", trim_pot)
 				inputs[3] = remap_range(trim_pot, 0, 65535, 0, 100)
-				# set OS volume playback volume
-				# print('Volume = {volume}%' .format(volume = inputs[3]))
-				#set_vol_cmd = 'sudo amixer cset numid=1 -- {volume}% > /dev/null' \
-				#.format(volume = inputs[3])
-				#os.system(set_vol_cmd)
 				# save the potentiometer reading for the next loop
 				last_read = trim_pot
 		except:
-			pass
+			logging.warning("Read sensors failed, probably not on RPi")
 # --------------------------------------------------------------------------------
-
-# only run PyAudio if we need it
-#AUDIO = False
-AUDIO = True
-
-
-audio = pyaudio.PyAudio()
-
-# tts initialization
-engine = pyttsx3.init()
 
 if __name__ == '__main__':
 	# start transcription with current time
 	manager = multiprocessing.Manager()
-	transcription = manager.Value(c_char_p, str(datetime.now()))
-	responses = manager.Value(c_char_p, " ")
-	change = multiprocessing.Array('d', 1)
-	
-	# set the buttons and volume
-	inputs = multiprocessing.Array('d', 8)
-	
-	# main loop
+	inputs = multiprocessing.Array('d', 8) # set the buttons and volume
 	sensing = Process(target=sensors, args=(inputs,))
-	recording = Process(target=record, args=(transcription, responses, change))
 	sensing.start()
 	
+	# main loop
 	while True:
-		# vol switch has changed
-		if inputs[4] == 1:
-			try:
-				recording.join()
-			except:
-				pass
-			cachedInputs = inputs #cache the inputs to make sure they don't change
-			print("volume is now ", cachedInputs[0])
-			# reset tracker of input changes
-			inputs[4] = 0
+		# wait for volume switch to change
+		while inputs[4] != 1:
+			continue
+		
+		logging.info("1. volume changed")
+		inputs[4] = 0 # reset tracker of input changes
+		
+		# wait for volume switch to turn on
+		while inputs[0] != 1:
+			continue
+		
+		# speak intro message
+		logging.info("2. volume on")
+		engine.setProperty('rate', 125)    # speed percent (can go over 100)
+		spyMasterChannel = random.randrange(30,80) / 10
+		engine.say(str("Secret channel found at level " + str(spyMasterChannel)))
+		engine.runAndWait()
+		
+		# wait for potentiometer to change
+		while inputs[7] != 1:
+			continue
+		
+		logging.info("3. potentiometer changed, channel is " + spyMasterChannel)
+		inputs[7] = 0 # reset tracker of input changes
+		
+		# connect to channel
+		while inputs[3] < spyMasterChannel:
+			logging.info("potentiometer is ", inputs[3])
+			continue
+		
+		# speak secret code message
+		engine.say(str("Secure connection established, enter secret code to authenticate"))
+		engine.runAndWait()
+		
+		# wait for button to change
+		while inputs[6] != 1:
+			continue
 			
-			# volume switch is on
-			while cachedInputs[0] != 1:
-				pass
-			
-			# tts initialization
-			engine = pyttsx3.init()
-			engine.setProperty('rate', 100)    # Speed percent (can go over 100)
-			
-			spyMasterChannel = int(random.randrange(30,80))
-			
-			# SPEAK THE RESPONSE
-			engine.say(str("Connect to HQ at "+str(spyMasterChannel)))
-			engine.runAndWait()
-			
-			# potentiometer has changed
-			if inputs[7] == 1:
-				cachedInputs = inputs #cache the inputs to make sure they don't change
-				print("potentiometer is now ", cachedInputs[3], " desired channel is ", spyMasterChannel)
-				# reset tracker of input changes
-				inputs[7] = 0
-				
-				# connect to channel
-				if cachedInputs[3] > spyMasterChannel:
-					# tts initialization
-					engine = pyttsx3.init()
-					engine.setProperty('rate', 100)    # Speed percent (can go over 100)
-					# SPEAK THE RESPONSE
-					engine.say(str("Secure Datalink found, enter secret code to connect"))
-					engine.runAndWait()
-					
-					# button has changed
-					while inputs[6] != 1:
-						pass
-						
-					cachedInputs = inputs #cache the inputs to make sure they don't change
-					print("button is now ", cachedInputs[2])
-					# reset tracker of input changes
-					inputs[6] = 0
-					
-					# tts initialization
-					engine = pyttsx3.init()
-					engine.setProperty('rate', 100)    # Speed percent (can go over 100)
-					# SPEAK THE RESPONSE
-					engine.say("Connected. Welcome, agent.")
-					engine.runAndWait()
-					
-					# lever has changed
-					while inputs[5] != 1:
-						pass
-					
-					cachedInputs = inputs #cache the inputs to make sure they don't change
-					print("lever is now ", cachedInputs[1])
-					# reset tracker of input changes
-					inputs[5] = 0
-					
-					# start recording
-					recording.start()
-					
-		'''# recording is finished
-		if change[0] == 1:
-			# reset tracker of recording
-			change[0] = 0
-			print("playing message")
-			# tts initialization
-			engine = pyttsx3.init()
-			engine.setProperty('rate', 150)    # Speed percent (can go over 100)
-			# SPEAK THE RESPONSE
-			engine.say(str(responses.value))
-			engine.runAndWait()'''
+		logging.info("4. code key pressed")
+		inputs[6] = 0 # reset tracker of input changes
+		engine.say("Connected to MI6 headquarters. Welcome, agent.")
+		engine.runAndWait()
+		
+		while True:
+		# lever has changed
+		while inputs[5] != 1:
+			pass
+		
+		cachedInputs = inputs #cache the inputs to make sure they don't change
+		logging.debug("lever is now ", cachedInputs[1])
+		# reset tracker of input changes
+		inputs[5] = 0
 		
 	sensing.join()
 	
