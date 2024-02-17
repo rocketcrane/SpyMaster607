@@ -26,6 +26,7 @@ import random
 import math
 import multiprocessing
 import playsound
+import pygame
 from ctypes import c_char_p
 from ctypes import c_uint8
 load_dotenv()
@@ -177,7 +178,7 @@ def record(transcription, responses, change):
 			output = client.chat.completions.create(
 				model="gpt-4-turbo-preview",
 				messages=[
-				{"role": "system", "content": "You are the spymaster of the world's best, most top secret spy organization. Mentor, teach, and support your spy through the spy walkie-talkie. Don't talk directly about who you are or your organization, be discreet but helpful, and be very concise, because your response will be read out loud."},
+				{"role": "system", "content": "You are the spymaster of the world's best, most top secret spy organization. Mentor, teach, and support your spy through the spy walkie-talkie. Don't talk directly about who you are or your organization, be discreet but helpful, and be EXTREMELY concise, because your response will be read out loud."},
 				{"role": "user", "content": transcription.value}
 			  ]
 			)
@@ -197,7 +198,11 @@ def record(transcription, responses, change):
 			)
 			response.stream_to_file(speech_file_path)
 			
-			playsound.playsound('speech.mp3', True)
+			pygame.mixer.init()
+			pygame.mixer.music.load("speech.mp3")
+			pygame.mixer.music.play()
+			while pygame.mixer.music.get_busy() == True:
+			   continue
 		except:
 			pass
 	
