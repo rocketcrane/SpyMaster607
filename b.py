@@ -336,48 +336,52 @@ if __name__ == '__main__':
 		engine.runAndWait()
 		
 		# potentiometer has changed
-		if inputs[7] == 1:
-			cachedInputs = inputs #cache the inputs to make sure they don't change
-			print("potentiometer is now ", cachedInputs[3], " desired channel is ", spyMasterChannel)
-			# reset tracker of input changes
-			inputs[7] = 0
+		while inputs[7] != 1:
+			pass
 			
-			# connect to channel
-			if cachedInputs[3] > spyMasterChannel:
-				# tts initialization
-				engine = pyttsx3.init()
-				engine.setProperty('rate', 100)    # Speed percent (can go over 100)
-				# SPEAK THE RESPONSE
-				engine.say(str("Secure Datalink found, enter secret code to connect"))
-				engine.runAndWait()
-				
-				# button has changed
-				while inputs[6] != 1:
-					pass
-					
-				cachedInputs = inputs #cache the inputs to make sure they don't change
-				print("button is now ", cachedInputs[2])
-				# reset tracker of input changes
-				inputs[6] = 0
-				
-				# tts initialization
-				engine = pyttsx3.init()
-				engine.setProperty('rate', 100)    # Speed percent (can go over 100)
-				# SPEAK THE RESPONSE
-				engine.say("Connected. Welcome, agent.")
-				engine.runAndWait()
-				
-				# lever has changed
-				while inputs[5] != 1:
-					pass
-				
-				cachedInputs = inputs #cache the inputs to make sure they don't change
-				print("lever is now ", cachedInputs[1])
-				# reset tracker of input changes
-				inputs[5] = 0
-				
-				# start recording
-				recording.start()
+		cachedInputs = inputs #cache the inputs to make sure they don't change
+		print("potentiometer is now ", cachedInputs[3], " desired channel is ", spyMasterChannel)
+		# reset tracker of input changes
+		inputs[7] = 0
+		
+		# connect to channel
+		while cachedInputs[3] < spyMasterChannel:
+			pass
+			
+		# tts initialization
+		engine = pyttsx3.init()
+		engine.setProperty('rate', 100)    # Speed percent (can go over 100)
+		# SPEAK THE RESPONSE
+		engine.say(str("Secure Datalink found, enter secret code to connect"))
+		engine.runAndWait()
+		
+		# button has changed
+		while inputs[6] != 1:
+			pass
+			
+		cachedInputs = inputs #cache the inputs to make sure they don't change
+		print("button is now ", cachedInputs[2])
+		# reset tracker of input changes
+		inputs[6] = 0
+		
+		# tts initialization
+		engine = pyttsx3.init()
+		engine.setProperty('rate', 100)    # Speed percent (can go over 100)
+		# SPEAK THE RESPONSE
+		engine.say("Connected. Welcome, agent.")
+		engine.runAndWait()
+		
+		# lever has changed
+		while inputs[5] != 1:
+			pass
+		
+		cachedInputs = inputs #cache the inputs to make sure they don't change
+		print("lever is now ", cachedInputs[1])
+		# reset tracker of input changes
+		inputs[5] = 0
+		
+		# start recording
+		recording.start()
 		
 	sensing.join()
 	
