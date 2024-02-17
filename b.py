@@ -198,7 +198,10 @@ def record(transcription, responses, change):
 			)
 			response.stream_to_file(speech_file_path)
 			
-			os.system('mpg321 speech.mp3 &')
+			try:
+				os.system('mpg321 speech.mp3 &')
+			except:
+				pass
 			sleep(5)
 		except:
 			pass
