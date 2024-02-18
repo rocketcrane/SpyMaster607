@@ -233,7 +233,7 @@ def sensors(inputs):
 				
 				# convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
 				logging.debug("potentiometer is ", trim_pot)
-				inputs[3] = remap_range(trim_pot, 0, 65535, 0, 100)
+				inputs[3] = trim_pot
 				# save the potentiometer reading for the next loop
 				last_read = trim_pot
 		except:
@@ -275,9 +275,11 @@ if __name__ == '__main__':
 		inputs[7] = 0 # reset tracker of input changes
 		
 		# connect to channel
-		while inputs[3] < spyMasterChannel:
-			logging.info("potentiometer is " + str(inputs[3]))
-			continue
+		while True:
+			channel = remap_range(inputs[3], 0, 65535, 0, 100)
+			logging.info("potentiometer is " + str(channel))
+		if channel > spyMasterChannel:
+			break
 		
 		# speak secret code message
 		engine.say(str("Secure connection established, enter secret code to authenticate"))
