@@ -63,8 +63,8 @@ def list_input_device(p):
 def remap_range(value, left_min, left_max, right_min, right_max):
 	# log addition
 	if value == 0:
-		value = value + 3
-	log_left_min = math.log(left_min + 2)
+		value = value + 2.5
+	log_left_min = math.log(left_min + 2.5)
 	log_left_max = math.log(left_max)
 	log_value = math.log(value)
 	
@@ -181,7 +181,7 @@ def sensors(inputs):
 	oldBut = 0
 	
 	last_read = 0       # this keeps track of the last potentiometer value
-	tolerance = 100     # to keep from being jittery we'll only change
+	tolerance = 25     # to keep from being jittery we'll only change
 	# volume when the pot has moved a significant amount
 	# on a 16-bit ADC
 	
