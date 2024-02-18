@@ -23,7 +23,7 @@ mcp = MCP.MCP3008(spi, cs)
 chan0 = AnalogIn(mcp, MCP.P0)
 
 last_read = 0       # this keeps track of the last potentiometer value
-tolerance = 250     # to keep from being jittery we'll only change
+tolerance = 1000     # to keep from being jittery we'll only change
                     # volume when the pot has moved a significant amount
                     # on a 16-bit ADC
 
@@ -40,11 +40,12 @@ def remap_range(value, left_min, left_max, right_min, right_max):
     return int(right_min + (valueScaled * right_span))
 
 while True:
-    # we'll assume that the pot didn't move
-    trim_pot_changed = False
-
     # read the analog pin
     trim_pot = chan0.value
+    
+    # if the trim pot is 0 discard the reading
+    if trim_pot < 1:
+        trim_pot = last_read
 
     # how much has it changed since the last read?
     pot_adjust = abs(trim_pot - last_read)
