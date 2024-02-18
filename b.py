@@ -280,8 +280,8 @@ if __name__ == '__main__':
 		# speak intro message
 		logging.info("2. volume on")
 		engine.setProperty('rate', 125)    # speed percent (can go over 100)
-		spyMasterChannel = random.randrange(30,80) / 10
-		engine.say(str("Secret channel found at level " + str(spyMasterChannel)))
+		spyMasterChannel = random.randrange(30,80)
+		engine.say(str("Secret channel found at level " + str(spyMasterChannel/10)))
 		engine.runAndWait()
 		
 		# wait for potentiometer to change
@@ -293,12 +293,13 @@ if __name__ == '__main__':
 		
 		# connect to channel
 		while True:
-			channel = inputs[3] / 10
+			channel = inputs[3]
 			logging.info("potentiometer is " + str(channel))
-		if channel > spyMasterChannel and channel < (spyMasterChannel + 0.3):
+		if channel > spyMasterChannel and channel < (spyMasterChannel+5):
 			break
 		
 		# speak secret code message
+		logging.info("4. channel found")
 		engine.say(str("Secure connection established, enter secret code to authenticate"))
 		engine.runAndWait()
 		
