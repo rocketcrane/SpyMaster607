@@ -44,7 +44,7 @@ def remap_range(value, in_min, in_max, out_min, out_max):
     valueScaled = float(out_min + (valueScaled * out_span))
 
     # Convert the 0-1 range into a value in the right range.
-    return 
+    return valueScaled
 
 while True:
     # read the analog pin
