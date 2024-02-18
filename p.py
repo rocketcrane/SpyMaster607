@@ -56,14 +56,18 @@ while True:
     # if the trim pot is 0 discard the reading
     if trim_pot < 1:
         trim_pot = last_read
+        
+    # if trim pot only dropped a bit discard the reading (lots of noise there)
+    if trim_pot > (last_read - 1000):
+        trim_pot = last_read
     
     # convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
-    set_volume = remap_range(trim_pot, 0, 65535, 0, 100)
+    volume = remap_range(trim_pot, 0, 65535, 0, 100)
     
-    # print("trim pot is ", trim_pot, " remapped to ", set_volume)
+    print("trim pot is ", trim_pot, " remapped to ", volume)
 
     # save the potentiometer reading for the next loop
     last_read = trim_pot
 
     # hang out and do nothing for a half second
-    #time.sleep(0.05)
+    time.sleep(0.01)
