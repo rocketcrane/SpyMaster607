@@ -32,6 +32,13 @@ load_dotenv() # .env file for API key
 client = OpenAI()
 audio = pyaudio.PyAudio() # initialize audio
 engine = pyttsx3.init() # initialize text to speech
+engine.setProperty('volume',0.5) # setting up volume level  between 0 and 1
+engine.setProperty('rate', 150)    # speed percent (can go over 100)
+
+# are we using the right PyAudio device?
+if logging.DEBUG >= logging.root.level:
+	list_input_device(audio)
+	logging.debug("using device", DEVICE)
 
 # GPIO & potentiometer setup, Raspberry Pi only
 try:	
@@ -85,101 +92,6 @@ def remap_range(value, in_min, in_max, out_min, out_max):
 	
 	# Convert the 0-1 range into a value in the right range.
 	return valueScaled
-		
-def record(transcription, responses, change):
-	# recording configuration
-	DEVICE = 0
-	FORMAT = pyaudio.paInt32
-	CHANNELS = 1
-	RATE = 44100
-	CHUNK = 1024
-	RECORD_SECONDS = 5
-	OUTPUT_FILENAME = "recording.wav"
-	MP3_FILENAME = "recording"
-	
-	# whisper configuration
-	WHISPER_TEMP = 0
-	WHISPER_CONTEXT_LENGTH = 400 # context characters to feed into whisper
-	
-	# are we using the right PyAudio device?
-	list_input_device(audio)
-	logging.debug("using device", DEVICE)
-	
-	index = 0 # start recording mp3 index at 0
-	
-	while True:
-		# recording
-		stream = audio.open(format=FORMAT, channels=CHANNELS,
-							rate=RATE, input=True, input_device_index=DEVICE,
-							frames_per_buffer=CHUNK)
-		frames = []
-		logging.info("Recording started...")
-		for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
-			data = stream.read(CHUNK)
-			frames.append(data)
-		logging.info("Recording finished.")
-		
-		# stop stream - might prevent PyAudio issues
-		stream.stop_stream()
-		stream.close()
-		
-		# generate .wav file
-		with wave.open(OUTPUT_FILENAME, 'wb') as wf:
-			wf.setnchannels(CHANNELS)
-			wf.setsampwidth(audio.get_sample_size(FORMAT))
-			wf.setframerate(RATE)
-			wf.writeframes(b''.join(frames))
-		
-		# convert .wav to .mp3
-		MP3_FILENAME_ALL = MP3_FILENAME + index + ".mp3"
-		mp3 =  pydub.AudioSegment.from_wav(OUTPUT_FILENAME)
-		mp3.export(MP3_FILENAME_ALL, format="mp3")
-	
-		try:
-			MP3_FILENAME_ALL = MP3_FILENAME + index + ".mp3"
-			audio_file = open(MP3_FILENAME_ALL, 'rb')
-			# transcribe audio with OpenAI whisper and save
-			current_transcription = client.audio.transcriptions.create(model="whisper-1", 
-																file=audio_file,
-																temperature=WHISPER_TEMP,
-																response_format="text")
-			transcription.value += " " # add a space for readability
-			transcription.value = current_transcription
-			logging.info("transcription:", transcription.value)
-			
-			index = index + 1 # increment mp3 index
-			os.remove(MP3_FILENAME_ALL) # remove the file
-			
-			# response
-			output = client.chat.completions.create(
-				model="gpt-4-turbo-preview",
-				messages=[
-				{"role": "system", "content": "You are the spymaster of the world's best, most top secret spy organization. Mentor, teach, and support your spy through the spy walkie-talkie. Don't talk directly about who you are or your organization, be discreet but helpful, and be EXTREMELY concise, because your response will be read out loud."},
-				{"role": "user", "content": transcription.value}
-			  ]
-			)
-			response = output.choices[0].message.content
-			logging.info("response: ", response)
-			
-			# save responses and set changed variable
-			responses.value = response
-			change[0] = 1
-			
-			# speak
-			speech_file_path = Path(__file__).parent / "speech.mp3"
-			response = client.audio.speech.create(
-			  model="tts-1",
-			  voice="onyx",
-			  input=response
-			)
-			response.stream_to_file(speech_file_path)
-			
-			try:
-				os.system('mpg321 speech.mp3 &')
-			except:
-				pass
-		except:
-			pass
 	
 def sensors(inputs):
 	# keeps tracks of the buttons
@@ -279,7 +191,6 @@ if __name__ == '__main__':
 		
 		# speak intro message
 		logging.info("2. volume on")
-		engine.setProperty('rate', 125)    # speed percent (can go over 100)
 		spyMasterChannel = random.randrange(30,80)
 		engine.say(str("Secret channel found at level " + str(spyMasterChannel/10)))
 		engine.runAndWait()
@@ -294,7 +205,7 @@ if __name__ == '__main__':
 		# connect to channel
 		while True:
 			channel = inputs[3]
-			logging.info("potentiometer is " + str(channel))
+			logging.debug("potentiometer is " + str(channel))
 			if channel > spyMasterChannel and channel < (spyMasterChannel+3):
 				break
 		
@@ -307,19 +218,112 @@ if __name__ == '__main__':
 		while inputs[6] != 1:
 			continue
 			
-		logging.info("4. code key pressed")
+		logging.info("5. code key pressed")
 		inputs[6] = 0 # reset tracker of input changes
 		engine.say("Connected to MI6 headquarters. Welcome, agent.")
 		engine.runAndWait()
 		
-		# lever has changed
-		while inputs[5] != 1:
-			pass
+		index = 0 # start recording mp3 index at 0
 		
-		cachedInputs = inputs #cache the inputs to make sure they don't change
-		logging.debug("lever is now ", cachedInputs[1])
-		# reset tracker of input changes
-		inputs[5] = 0
+		# start transcription with current time
+		transcription = str(datetime.now())[0:19]
+		
+		#AI audio loop
+		while True:
+			# lever has changed
+			while inputs[5] != 1:
+				continue
+			
+			logging.info("6. talk lever pressed")
+			inputs[5] = 0 # reset tracker of input changes
+			
+			# recording configuration
+			DEVICE = 0
+			FORMAT = pyaudio.paInt32
+			CHANNELS = 1
+			RATE = 44100
+			CHUNK = 1024
+			RECORD_SECONDS = 5
+			OUTPUT_FILENAME = "recording.wav"
+			MP3_FILENAME = "recording"
+			
+			# recording audio
+			stream = audio.open(format=FORMAT, channels=CHANNELS,
+								rate=RATE, input=True, input_device_index=DEVICE,
+								frames_per_buffer=CHUNK)
+			frames = []
+			logging.info("7. recording started")
+			for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+				data = stream.read(CHUNK)
+				frames.append(data)
+			logging.info(" 8. recording finished")
+			
+			# stop stream - might prevent PyAudio issues
+			stream.stop_stream()
+			stream.close()
+			
+			# generate .wav file
+			with wave.open(OUTPUT_FILENAME, 'wb') as wf:
+				wf.setnchannels(CHANNELS)
+				wf.setsampwidth(audio.get_sample_size(FORMAT))
+				wf.setframerate(RATE)
+				wf.writeframes(b''.join(frames))
+			
+			# convert .wav to .mp3
+			MP3_FILENAME_ALL = MP3_FILENAME + index + ".mp3"
+			mp3 =  pydub.AudioSegment.from_wav(OUTPUT_FILENAME)
+			mp3.export(MP3_FILENAME_ALL, format="mp3")
+			
+			index = index + 1 # increment index that keeps track of mp3 files
+			
+			# whisper configuration
+			WHISPER_TEMP = 0
+			
+			# speech-to-text with Whisper
+			audio_file = open(MP3_FILENAME_ALL, 'rb')
+			# transcribe audio with OpenAI whisper and save
+			current_transcription = client.audio.transcriptions.create(model="whisper-1", 
+																file=audio_file,
+																temperature=WHISPER_TEMP,
+																response_format="text")
+			transcription += " " # add a space for readability
+			transcription = current_transcription
+			logging.info("9. transcription obtained: ", current_transcription)
+			
+			os.remove(MP3_FILENAME_ALL) # remove the mp3 recording
+			
+			# save the transcription to a text file
+			with open('conversation.txt', 'w') as f:
+				f.write(current_transcription)
+				f.write('\n')
+			
+			# spymaster's response via GPT-4 in a trench coat
+			output = client.chat.completions.create(
+				model="gpt-4-turbo-preview",
+				messages=[
+				{"role": "system", "content": "You are the spymaster of the world's best, most top secret spy organization. Mentor, teach, and support your spy through the spy walkie-talkie. Don't talk directly about who you are or your organization, be discreet but helpful, and be EXTREMELY EXTREMELY CONCISE, because your response will be read out loud."},
+				{"role": "user", "content": transcription.value}
+			  ]
+			)
+			response = output.choices[0].message.content
+			logging.info("10. response obtained from MI6: ", response)
+			
+			# save the response to a text file
+			with open('conversation.txt', 'w') as f:
+				f.write(response)
+				f.write('\n')
+			
+			# text-to-speech with OpenAI
+			speech_file_path = Path(__file__).parent / "speech.mp3"
+			response = client.audio.speech.create(
+			  model="tts-1",
+			  voice="onyx",
+			  input=response
+			)
+			response.stream_to_file(speech_file_path)
+			
+			# play the response out as an mp3
+			os.system('mpg321 speech.mp3 &')
 		
 	sensing.join()
 	
