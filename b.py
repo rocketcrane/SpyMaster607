@@ -30,9 +30,6 @@ def noalsaerr():
 	asound.snd_lib_error_set_handler(c_error_handler)
 	yield
 	asound.snd_lib_error_set_handler(None)
-with noalsaerr():
-	audio = pyaudio.PyAudio() # initialize audio
-logging.info("PyAudio initialized")
 
 try:
 	from adafruit_mcp3xxx.analog_in import AnalogIn
@@ -263,6 +260,10 @@ if __name__ == '__main__':
 		
 		#AI audio loop
 		while True:
+			with noalsaerr():
+			audio = pyaudio.PyAudio() # initialize audio
+			logging.info("PyAudio initialized")
+			
 			# lever has changed
 			while inputs[5] != 1:
 				continue
@@ -287,9 +288,10 @@ if __name__ == '__main__':
 						data = stream.read(CHUNK)
 						frames.append(data)
 					
-					# stop stream - might prevent PyAudio issues
-					# stream.stop_stream()
+					# stop PyAudio - might prevent PyAudio issues
+					stream.stop_stream()
 					stream.close()
+					audio.terminate()
 					logging.info(" 8. recording finished")
 				except:
 					logging.error("recording failed!")
