@@ -270,7 +270,7 @@ if __name__ == '__main__':
 				wf.writeframes(b''.join(frames))
 			
 			# convert .wav to .mp3
-			MP3_FILENAME_ALL = MP3_FILENAME + index + ".mp3"
+			MP3_FILENAME_ALL = MP3_FILENAME + str(index) + ".mp3"
 			mp3 =  pydub.AudioSegment.from_wav(OUTPUT_FILENAME)
 			mp3.export(MP3_FILENAME_ALL, format="mp3")
 			
