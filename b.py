@@ -302,7 +302,7 @@ if __name__ == '__main__':
 				model="gpt-4-turbo-preview",
 				messages=[
 				{"role": "system", "content": "You are the spymaster of the world's best, most top secret spy organization. Mentor, teach, and support your spy through the spy walkie-talkie. Don't talk directly about who you are or your organization, be discreet but helpful, and be EXTREMELY EXTREMELY CONCISE, because your response will be read out loud."},
-				{"role": "user", "content": transcription.value}
+				{"role": "user", "content": current_transcription}
 			  ]
 			)
 			response = output.choices[0].message.content
