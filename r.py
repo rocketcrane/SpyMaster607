@@ -1,9 +1,10 @@
-from ctypes import *
-from contextlib import contextmanager
 import pyaudio
 import logging
 import pydub
 import wave
+
+from ctypes import *
+from contextlib import contextmanager
 
 ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
 
