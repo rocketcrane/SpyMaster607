@@ -288,7 +288,7 @@ if __name__ == '__main__':
 						frames.append(data)
 					
 					# stop stream - might prevent PyAudio issues
-					stream.stop_stream()
+					# stream.stop_stream()
 					stream.close()
 					logging.info(" 8. recording finished")
 				except:
