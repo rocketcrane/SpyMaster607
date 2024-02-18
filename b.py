@@ -276,18 +276,22 @@ if __name__ == '__main__':
 			
 			# recording audio
 			logging.info("7. recording started")
-			stream = audio.open(format=FORMAT, channels=CHANNELS,
-								rate=RATE, input=True, input_device_index=DEVICE,
-								frames_per_buffer=CHUNK)
-			frames = []
-			for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
-				data = stream.read(CHUNK)
-				frames.append(data)
-			
-			# stop stream - might prevent PyAudio issues
-			stream.stop_stream()
-			stream.close()
-			logging.info(" 8. recording finished")
+			try:
+				stream = audio.open(format=FORMAT, channels=CHANNELS,
+									rate=RATE, input=True, input_device_index=DEVICE,
+									frames_per_buffer=CHUNK)
+				frames = []
+				for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+					data = stream.read(CHUNK)
+					frames.append(data)
+				
+				# stop stream - might prevent PyAudio issues
+				stream.stop_stream()
+				stream.close()
+				logging.info(" 8. recording finished")
+			except:
+				logging.error("recording failed!")
+				continue # jump to beginning of loop so we don't try to use the non-existent recording
 			
 			# generate .wav file
 			with wave.open(OUTPUT_FILENAME, 'wb') as wf:
