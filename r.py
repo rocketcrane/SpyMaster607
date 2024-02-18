@@ -7,11 +7,11 @@ def suppress_stdout_stderr():
 	with open(devnull, 'w') as fnull:
 		with redirect_stderr(fnull) as err, redirect_stdout(fnull) as out:
 			yield (err, out)
-			
-import pydub
+
 import logging
 
 with suppress_stdout_stderr():
+	import pydub
 	import pyaudio
 	audio = pyaudio.PyAudio() # initialize audio
 	
