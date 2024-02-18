@@ -58,7 +58,7 @@ while True:
         trim_pot = last_read
         
     # if trim pot only dropped a bit discard the reading (lots of noise there)
-    if trim_pot > (last_read - 1000):
+    if trim_pot > (last_read - 1000) and trim_pot < last_read:
         trim_pot = last_read
     
     # convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
