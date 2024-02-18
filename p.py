@@ -36,8 +36,8 @@ def remap_range(value, in_min, in_max, out_min, out_max):
     #print("this should be between 0 and 1: ", valueScaled)
     
     # Logarithmically map the value
-    # first, scale the value to a 1-11 range
-    valueScaled = float(1 + (valueScaled * 9))
+    # first, scale the value to a 0.1-10 range
+    valueScaled = float(0.1 + (valueScaled * 9.9))
     #print("this should be between 1 and 10: ", valueScaled)
     # then, map it to log base 10
     valueScaled = math.log(valueScaled, 10)
