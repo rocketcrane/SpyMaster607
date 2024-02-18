@@ -26,6 +26,9 @@ try:
 	import board
 except:
 	logging.warning("Import failed, probably not on RPi")
+	
+# set display variable (needed for FFPlay)
+os.system('export DISPLAY=:0.0')
 
 # initialize AI
 load_dotenv() # .env file for API key
@@ -256,11 +259,12 @@ if __name__ == '__main__':
 			for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
 				data = stream.read(CHUNK)
 				frames.append(data)
-			logging.info(" 8. recording finished")
 			
 			# stop stream - might prevent PyAudio issues
 			stream.stop_stream()
 			stream.close()
+			
+			logging.info(" 8. recording finished")
 			
 			# generate .wav file
 			with wave.open(OUTPUT_FILENAME, 'wb') as wf:
@@ -323,9 +327,7 @@ if __name__ == '__main__':
 			response.stream_to_file(speech_file_path)
 			
 			# play the response out as an mp3
-			os.system('mpg321 speech.mp3 &')
-		
-	sensing.join()
-	
+			os.system('mpg321 -q speech.mp3')
 	# cleanup
 	audio.terminate()
+	sensing.join()
