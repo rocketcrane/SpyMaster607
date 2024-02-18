@@ -296,6 +296,7 @@ if __name__ == '__main__':
 			channel = inputs[3]
 			logging.info("potentiometer is " + str(channel))
 		if channel > spyMasterChannel and channel < (spyMasterChannel+5):
+			print("here")
 			break
 		
 		# speak secret code message
