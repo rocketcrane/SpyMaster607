@@ -1,18 +1,25 @@
-from contextlib import contextmanager,redirect_stderr,redirect_stdout
-from os import devnull
+from ctypes import *
+from contextlib import contextmanager
+import pyaudio
+import logging
+import pydub
+import wave
+
+ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
+
+def py_error_handler(filename, line, function, err, fmt):
+	pass
+
+c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
 
 @contextmanager
-def suppress_stdout_stderr():
-	"""A context manager that redirects stdout and stderr to devnull"""
-	with open(devnull, 'w') as fnull:
-		with redirect_stderr(fnull) as err, redirect_stdout(fnull) as out:
-			yield (err, out)
+def noalsaerr():
+	asound = cdll.LoadLibrary('libasound.so')
+	asound.snd_lib_error_set_handler(c_error_handler)
+	yield
+	asound.snd_lib_error_set_handler(None)
 
-import logging
-
-with suppress_stdout_stderr():
-	import pydub
-	import pyaudio
+with noalsaerr():
 	audio = pyaudio.PyAudio() # initialize audio
 	
 # recording configuration
