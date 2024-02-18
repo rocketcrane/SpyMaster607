@@ -276,9 +276,9 @@ if __name__ == '__main__':
 		
 		# connect to channel
 		while True:
-			channel = remap_range(inputs[3], 0, 65535, 0, 100)
+			channel = remap_range(inputs[3], 0, 65535, 0, 100) / 10
 			logging.info("potentiometer is " + str(channel))
-		if channel > spyMasterChannel:
+		if channel > spyMasterChannel and channel < (spyMasterChannel + 0.1):
 			break
 		
 		# speak secret code message
