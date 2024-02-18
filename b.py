@@ -60,24 +60,31 @@ def list_input_device(p):
 		devName = deviceInfo['name']
 		logging.debug(f"Device ID {i}: {devName}")
 
-def remap_range(value, left_min, left_max, right_min, right_max):
-	# log addition
-	if value == 0:
-		value = value + 2.5
-	log_left_min = math.log(left_min + 2.5)
-	log_left_max = math.log(left_max)
-	log_value = math.log(value)
-	
+def remap_range(value, in_min, in_max, out_min, out_max):
 	# this remaps a value from original (left) range to new (right) range
 	# Figure out how 'wide' each range is
-	left_span = log_left_max - log_left_min
-	right_span = right_max - right_min
+	in_span = in_max - in_min
+	out_span = out_max - out_min
 	
-	# Convert the left range into a 0-1 range (int)
-	valueScaled = float(log_value - log_left_min) / float(left_span)
+	# Convert the left range into a 0-1 range
+	valueScaled = float(value - in_min) / float(in_span)
+	#print("this should be between 0 and 1: ", valueScaled)
+	
+	# Logarithmically map the value
+	# first, scale the value to a 0.1-10 range
+	valueScaled = float(0.1 + (valueScaled * 9.9))
+	#print("this should be between 0.1 and 10: ", valueScaled)
+	# then, map it to log base 10
+	valueScaled = math.log(valueScaled, 10)
+	#print("this should be between -1 and 1: ", valueScaled)
+	# then scale it to between 0 and 1
+	valueScaled = (valueScaled + 1) / 2
+	
+	# Linearly scale the value to the new range
+	valueScaled = float(out_min + (valueScaled * out_span))
 	
 	# Convert the 0-1 range into a value in the right range.
-	return float(right_min + (valueScaled * right_span))
+	return valueScaled
 		
 def record(transcription, responses, change):
 	# recording configuration
@@ -181,7 +188,7 @@ def sensors(inputs):
 	oldBut = 0
 	
 	last_read = 0       # this keeps track of the last potentiometer value
-	tolerance = 25     # to keep from being jittery we'll only change
+	tolerance = 250     # to keep from being jittery we'll only change
 	# volume when the pot has moved a significant amount
 	# on a 16-bit ADC
 	
@@ -223,6 +230,21 @@ def sensors(inputs):
 			trim_pot_changed = False
 			# read the analog pin
 			trim_pot = chan0.value
+			
+			# if the trim pot is 0 and volume switch is ON discard the reading
+			if trim_pot < 1 and inputs[0] == 1:
+				trim_pot = last_read
+				
+			# if trim pot only dropped a bit discard the reading (lots of noise there)
+			if trim_pot > (last_read - 250) and trim_pot < last_read:
+				trim_pot = last_read
+			
+			# output the volume
+			# convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
+			volume = remap_range(trim_pot, 0, 65535, 0, 100)
+			inputs[3] = volume
+			last_read = trim_pot # save the potentiometer reading for the next loop
+			
 			# how much has it changed since the last read?
 			pot_adjust = abs(trim_pot - last_read)
 			if pot_adjust > tolerance:
@@ -230,12 +252,6 @@ def sensors(inputs):
 			if trim_pot_changed:
 				# let the main code know the pot has changed
 				inputs[7] = 1
-				
-				# convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
-				logging.debug("potentiometer is ", trim_pot)
-				inputs[3] = trim_pot
-				# save the potentiometer reading for the next loop
-				last_read = trim_pot
 		except:
 			logging.warning("Read sensors failed, probably not on RPi")
 # --------------------------------------------------------------------------------
@@ -276,7 +292,7 @@ if __name__ == '__main__':
 		
 		# connect to channel
 		while True:
-			channel = remap_range(inputs[3], 0, 75535, 0, 100) / 10
+			channel = inputs[3]
 			logging.info("potentiometer is " + str(channel))
 		if channel > spyMasterChannel and channel < (spyMasterChannel + 0.3):
 			break
