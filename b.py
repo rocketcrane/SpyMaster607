@@ -243,7 +243,6 @@ def sensors(inputs):
 			# convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
 			volume = remap_range(trim_pot, 0, 65535, 0, 100)
 			inputs[3] = volume
-			last_read = trim_pot # save the potentiometer reading for the next loop
 			
 			# how much has it changed since the last read?
 			pot_adjust = abs(trim_pot - last_read)
@@ -252,6 +251,8 @@ def sensors(inputs):
 			if trim_pot_changed:
 				# let the main code know the pot has changed
 				inputs[7] = 1
+			
+			last_read = trim_pot # save the potentiometer reading for the next loop
 		except:
 			logging.warning("Read sensors failed, probably not on RPi")
 # --------------------------------------------------------------------------------
