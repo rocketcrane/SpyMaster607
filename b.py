@@ -27,6 +27,19 @@ try:
 except:
 	logging.warning("Import failed, probably not on RPi")
 	
+# recording configuration
+DEVICE = 0
+FORMAT = pyaudio.paInt32
+CHANNELS = 1
+RATE = 44100
+CHUNK = 1024
+RECORD_SECONDS = 5
+OUTPUT_FILENAME = "recording.wav"
+MP3_FILENAME = "recording.mp3"
+
+# whisper configuration
+WHISPER_TEMP = 0
+	
 # set display variable (needed for FFPlay)
 os.system('export DISPLAY=:0.0')
 
@@ -244,16 +257,6 @@ if __name__ == '__main__':
 			logging.info("6. talk lever pressed")
 			inputs[5] = 0 # reset tracker of input changes
 			
-			# recording configuration
-			DEVICE = 0
-			FORMAT = pyaudio.paInt32
-			CHANNELS = 1
-			RATE = 44100
-			CHUNK = 1024
-			RECORD_SECONDS = 5
-			OUTPUT_FILENAME = "recording.wav"
-			MP3_FILENAME = "recording.mp3"
-			
 			# recording audio
 			logging.info("7. recording started")
 			stream = audio.open(format=FORMAT, channels=CHANNELS,
@@ -279,9 +282,6 @@ if __name__ == '__main__':
 			# convert .wav to .mp3
 			mp3 =  pydub.AudioSegment.from_wav(OUTPUT_FILENAME)
 			mp3.export(MP3_FILENAME, format="mp3")
-			
-			# whisper configuration
-			WHISPER_TEMP = 0
 			
 			# speech-to-text with Whisper
 			audio_file = open(MP3_FILENAME, 'rb')

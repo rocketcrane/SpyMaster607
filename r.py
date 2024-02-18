@@ -1,11 +1,6 @@
 from contextlib import contextmanager,redirect_stderr,redirect_stdout
 from os import devnull
 
-import pyaudio
-import pydub
-
-import logging
-
 @contextmanager
 def suppress_stdout_stderr():
 	"""A context manager that redirects stdout and stderr to devnull"""
@@ -13,8 +8,11 @@ def suppress_stdout_stderr():
 		with redirect_stderr(fnull) as err, redirect_stdout(fnull) as out:
 			yield (err, out)
 			
+import pydub
+import logging
 
 with suppress_stdout_stderr():
+	import pyaudio
 	audio = pyaudio.PyAudio() # initialize audio
 	
 # recording configuration
