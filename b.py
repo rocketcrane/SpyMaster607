@@ -276,7 +276,7 @@ if __name__ == '__main__':
 		
 		# connect to channel
 		while inputs[3] < spyMasterChannel:
-			logging.info("potentiometer is ", inputs[3])
+			logging.info("potentiometer is " + str(inputs[3]))
 			continue
 		
 		# speak secret code message
