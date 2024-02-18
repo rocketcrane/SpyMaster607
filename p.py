@@ -40,6 +40,8 @@ def remap_range(value, left_min, left_max, right_min, right_max):
     return int(right_min + (valueScaled * right_span))
 
 while True:
+    trim_pot_changed = False
+    
     # read the analog pin
     trim_pot = chan0.value
     
