@@ -30,6 +30,9 @@ def noalsaerr():
 	asound.snd_lib_error_set_handler(c_error_handler)
 	yield
 	asound.snd_lib_error_set_handler(None)
+with noalsaerr():
+	audio = pyaudio.PyAudio() # initialize audio
+logging.info("PyAudio initialized")
 
 try:
 	from adafruit_mcp3xxx.analog_in import AnalogIn
@@ -260,10 +263,6 @@ if __name__ == '__main__':
 		
 		#AI audio loop
 		while True:
-			with noalsaerr():
-				audio = pyaudio.PyAudio() # initialize audio
-			logging.info("PyAudio initialized")
-			
 			# lever has changed
 			while inputs[5] != 1:
 				continue
@@ -277,26 +276,24 @@ if __name__ == '__main__':
 			
 			# recording audio
 			logging.info("7. recording started")
-			# jump back to try the recording until it works!
-			while True:
-				try:
-					stream = audio.open(format=FORMAT, channels=CHANNELS,
-										rate=RATE, input=True, input_device_index=DEVICE,
-										frames_per_buffer=CHUNK)
-					frames = []
-					for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
-						data = stream.read(CHUNK)
-						frames.append(data)
-					
-					# stop PyAudio - might prevent PyAudio issues
-					stream.stop_stream()
-					stream.close()
-					audio.terminate()
-					logging.info(" 8. recording finished")
-				except:
-					logging.error("recording failed!")
-					continue # jump to beginning of loop so we don't try to use the non-existent recording
-				break
+			try:
+				stream = audio.open(format=FORMAT, channels=CHANNELS,
+									rate=RATE, input=True, input_device_index=DEVICE,
+									frames_per_buffer=CHUNK)
+				frames = []
+				for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+					data = stream.read(CHUNK)
+					frames.append(data)
+				
+				# stop stream - might prevent PyAudio issues
+				stream.stop_stream()
+				stream.close()
+				logging.info(" 8. recording finished")
+			except:
+				logging.error("recording failed!")
+				engine.say("Connection unstable. Wait and try again.")
+				engine.runAndWait()
+				continue # jump to beginning of loop so we don't try to use the non-existent recording
 			
 			# generate .wav file
 			with wave.open(OUTPUT_FILENAME, 'wb') as wf:
@@ -323,7 +320,7 @@ if __name__ == '__main__':
 			os.remove(MP3_FILENAME) # remove the mp3 recording
 			
 			# save the transcription to a text file
-			with open('conversation.txt', 'w') as f:
+			with open('conversation.txt', 'a') as f:
 				f.write(current_transcription)
 				f.write('\n')
 			
@@ -339,7 +336,7 @@ if __name__ == '__main__':
 			logging.info("10. response obtained from MI6: " + str(response))
 			
 			# save the response to a text file
-			with open('conversation.txt', 'w') as f:
+			with open('conversation.txt', 'a') as f:
 				f.write(response)
 				f.write('\n')
 			
