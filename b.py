@@ -63,7 +63,7 @@ def list_input_device(p):
 def remap_range(value, left_min, left_max, right_min, right_max):
 	# log addition
 	if value == 0:
-		value = value + 2
+		value = value + 3
 	log_left_min = math.log(left_min + 2)
 	log_left_max = math.log(left_max)
 	log_value = math.log(value)
@@ -276,9 +276,9 @@ if __name__ == '__main__':
 		
 		# connect to channel
 		while True:
-			channel = remap_range(inputs[3], 0, 65535, 0, 100) / 10
+			channel = remap_range(inputs[3], 0, 75535, 0, 100) / 10
 			logging.info("potentiometer is " + str(channel))
-		if channel > spyMasterChannel and channel < (spyMasterChannel + 0.1):
+		if channel > spyMasterChannel and channel < (spyMasterChannel + 0.3):
 			break
 		
 		# speak secret code message
