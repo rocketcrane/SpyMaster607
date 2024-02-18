@@ -314,7 +314,7 @@ if __name__ == '__main__':
 			current_transcription = str(transcribe)
 			transcription += " " # add a space for readability
 			transcription += current_transcription
-			logging.info("9. transcription obtained: ", current_transcription)
+			logging.info("9. transcription obtained: " + current_transcription)
 			os.remove(MP3_FILENAME) # remove the mp3 recording
 			
 			# save the transcription to a text file
@@ -331,7 +331,7 @@ if __name__ == '__main__':
 			  ]
 			)
 			response = output.choices[0].message.content
-			logging.info("10. response obtained from MI6: ", str(response))
+			logging.info("10. response obtained from MI6: " + str(response))
 			
 			# save the response to a text file
 			with open('conversation.txt', 'w') as f:
