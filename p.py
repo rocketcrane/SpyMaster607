@@ -48,6 +48,8 @@ while True:
 
     # how much has it changed since the last read?
     pot_adjust = abs(trim_pot - last_read)
+    
+    print("trimp pot is ", trim_pot)
 
     if pot_adjust > tolerance:
         trim_pot_changed = True
@@ -56,10 +58,10 @@ while True:
         # convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
         set_volume = remap_range(trim_pot, 0, 65535, 0, 100)
         
-        print("trimp pot is ", trim_pot, " remapped to ", set_volume)
+        print("remapped to ", set_volume)
 
         # save the potentiometer reading for the next loop
         last_read = trim_pot
 
     # hang out and do nothing for a half second
-    time.sleep(0.2)
+    time.sleep(0.05)
