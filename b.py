@@ -293,7 +293,7 @@ if __name__ == '__main__':
 		
 		# connect to channel
 		while True:
-			channel = inputs[3]
+			channel = inputs[3] / 10
 			logging.info("potentiometer is " + str(channel))
 		if channel > spyMasterChannel and channel < (spyMasterChannel + 0.3):
 			break
