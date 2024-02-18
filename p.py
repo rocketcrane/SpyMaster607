@@ -9,6 +9,7 @@ import digitalio
 import board
 import adafruit_mcp3xxx.mcp3008 as MCP
 from adafruit_mcp3xxx.analog_in import AnalogIn
+import math
 
 # create the spi bus
 spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
@@ -23,48 +24,43 @@ mcp = MCP.MCP3008(spi, cs)
 chan0 = AnalogIn(mcp, MCP.P0)
 
 last_read = 0       # this keeps track of the last potentiometer value
-tolerance = 1000     # to keep from being jittery we'll only change
-                    # volume when the pot has moved a significant amount
-                    # on a 16-bit ADC
 
-def remap_range(value, left_min, left_max, right_min, right_max):
+def remap_range(value, in_min, in_max, out_min, out_max):
     # this remaps a value from original (left) range to new (right) range
     # Figure out how 'wide' each range is
-    left_span = left_max - left_min
-    right_span = right_max - right_min
+    in_span = in_max - in_min
+    out_span = out_max - out_min
 
-    # Convert the left range into a 0-1 range (int)
-    valueScaled = int(value - left_min) / int(left_span)
+    # Convert the left range into a 0-1 range
+    valueScaled = float(value - in_min) / float(in_span)
+    
+    # Logarithmically map the value
+    # first, scale the value to a 1-11 range
+    valueScaled = float(1 + (valueScaled * 10))
+    # then, map it to log base 10
+    valueScaled = math.log(valueScaled)
+    
+    # Linearly scale the value to the new range
+    valueScaled = float(out_min + (valueScaled * out_span))
 
     # Convert the 0-1 range into a value in the right range.
-    return int(right_min + (valueScaled * right_span))
+    return 
 
 while True:
-    trim_pot_changed = False
-    
     # read the analog pin
     trim_pot = chan0.value
     
     # if the trim pot is 0 discard the reading
     if trim_pot < 1:
         trim_pot = last_read
-
-    # how much has it changed since the last read?
-    pot_adjust = abs(trim_pot - last_read)
     
-    print("trimp pot is ", trim_pot)
+    # convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
+    set_volume = remap_range(trim_pot, 0, 65535, 0, 100)
+    
+    print("trim pot is ", trim_pot, " remapped to ", set_volume)
 
-    if pot_adjust > tolerance:
-        trim_pot_changed = True
-
-    if trim_pot_changed:
-        # convert 16bit adc0 (0-65535) trim pot read into 0-100 volume level
-        set_volume = remap_range(trim_pot, 0, 65535, 0, 100)
-        
-        print("remapped to ", set_volume)
-
-        # save the potentiometer reading for the next loop
-        last_read = trim_pot
+    # save the potentiometer reading for the next loop
+    last_read = trim_pot
 
     # hang out and do nothing for a half second
     time.sleep(0.05)
