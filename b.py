@@ -271,7 +271,7 @@ if __name__ == '__main__':
 		while inputs[7] != 1:
 			continue
 		
-		logging.info("3. potentiometer changed, channel is " + spyMasterChannel)
+		logging.info("3. potentiometer changed, channel is " + str(spyMasterChannel))
 		inputs[7] = 0 # reset tracker of input changes
 		
 		# connect to channel
