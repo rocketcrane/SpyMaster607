@@ -261,7 +261,7 @@ if __name__ == '__main__':
 		#AI audio loop
 		while True:
 			with noalsaerr():
-			audio = pyaudio.PyAudio() # initialize audio
+				audio = pyaudio.PyAudio() # initialize audio
 			logging.info("PyAudio initialized")
 			
 			# lever has changed
