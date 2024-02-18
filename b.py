@@ -237,6 +237,10 @@ if __name__ == '__main__':
 			while inputs[5] != 1:
 				continue
 			
+			# check for real-time state of the lever
+			while inputs[1] != 1:
+				continue
+			
 			logging.info("6. talk lever pressed")
 			inputs[5] = 0 # reset tracker of input changes
 			
@@ -248,14 +252,14 @@ if __name__ == '__main__':
 			CHUNK = 1024
 			RECORD_SECONDS = 5
 			OUTPUT_FILENAME = "recording.wav"
-			MP3_FILENAME = "recording"
+			MP3_FILENAME = "recording.mp3"
 			
 			# recording audio
+			logging.info("7. recording started")
 			stream = audio.open(format=FORMAT, channels=CHANNELS,
 								rate=RATE, input=True, input_device_index=DEVICE,
 								frames_per_buffer=CHUNK)
 			frames = []
-			logging.info("7. recording started")
 			for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
 				data = stream.read(CHUNK)
 				frames.append(data)
@@ -263,7 +267,6 @@ if __name__ == '__main__':
 			# stop stream - might prevent PyAudio issues
 			stream.stop_stream()
 			stream.close()
-			
 			logging.info(" 8. recording finished")
 			
 			# generate .wav file
@@ -274,27 +277,24 @@ if __name__ == '__main__':
 				wf.writeframes(b''.join(frames))
 			
 			# convert .wav to .mp3
-			MP3_FILENAME_ALL = MP3_FILENAME + str(index) + ".mp3"
 			mp3 =  pydub.AudioSegment.from_wav(OUTPUT_FILENAME)
-			mp3.export(MP3_FILENAME_ALL, format="mp3")
-			
-			index = index + 1 # increment index that keeps track of mp3 files
+			mp3.export(MP3_FILENAME, format="mp3")
 			
 			# whisper configuration
 			WHISPER_TEMP = 0
 			
 			# speech-to-text with Whisper
-			audio_file = open(MP3_FILENAME_ALL, 'rb')
+			audio_file = open(MP3_FILENAME, 'rb')
 			# transcribe audio with OpenAI whisper and save
-			current_transcription = client.audio.transcriptions.create(model="whisper-1", 
+			transcribe = client.audio.transcriptions.create(model="whisper-1", 
 																file=audio_file,
 																temperature=WHISPER_TEMP,
 																response_format="text")
+			current_transcription = str(transcribe)
 			transcription += " " # add a space for readability
-			transcription = current_transcription
+			transcription += current_transcription
 			logging.info("9. transcription obtained: ", current_transcription)
-			
-			os.remove(MP3_FILENAME_ALL) # remove the mp3 recording
+			os.remove(MP3_FILENAME) # remove the mp3 recording
 			
 			# save the transcription to a text file
 			with open('conversation.txt', 'w') as f:
@@ -310,7 +310,7 @@ if __name__ == '__main__':
 			  ]
 			)
 			response = output.choices[0].message.content
-			logging.info("10. response obtained from MI6: ", response)
+			logging.info("10. response obtained from MI6: ", str(response))
 			
 			# save the response to a text file
 			with open('conversation.txt', 'w') as f:
