@@ -15,7 +15,7 @@ import logging
 import multiprocessing
 import pyttsx3
 
-logging.setLevel(INFO) # set logging level
+logging.basicConfig(level=logging.INFO) # set logging level
 
 try:
 	from adafruit_mcp3xxx.analog_in import AnalogIn
@@ -292,7 +292,6 @@ if __name__ == '__main__':
 		engine.say("Connected to MI6 headquarters. Welcome, agent.")
 		engine.runAndWait()
 		
-		while True:
 		# lever has changed
 		while inputs[5] != 1:
 			pass
