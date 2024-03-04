@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 from openai import OpenAI
-import dotenv
+from python-dotenv import load_dotenv
 from time import sleep
 from multiprocessing import Process
 from ctypes import c_char_p
@@ -61,7 +61,7 @@ WHISPER_TEMP = 0
 os.system('export DISPLAY=:0.0')
 
 # initialize AI
-dotenv.load_dotenv() # .env file for API key
+load_dotenv() # .env file for API key
 client = OpenAI()
 audio = pyaudio.PyAudio() # initialize audio
 engine = pyttsx3.init() # initialize text to speech
