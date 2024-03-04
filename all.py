@@ -34,15 +34,15 @@ with noalsaerr():
 	audio = pyaudio.PyAudio() # initialize audio
 logging.info("PyAudio initialized")
 
-try:
-	from adafruit_mcp3xxx.analog_in import AnalogIn
-	import RPi.GPIO as GPIO
-	import adafruit_mcp3xxx.mcp3008 as MCP
-	import busio
-	import digitalio
-	import board
-except:
-	logging.warning("Import failed, probably not on RPi")
+#try:
+from adafruit_mcp3xxx.analog_in import AnalogIn
+import RPi.GPIO as GPIO
+import adafruit_mcp3xxx.mcp3008 as MCP
+import busio
+import digitalio
+import board
+#except:
+	#logging.warning("Import failed, probably not on RPi")
 	
 # recording configuration
 DEVICE = 0
@@ -74,21 +74,21 @@ if logging.DEBUG >= logging.root.level:
 	logging.debug("using device", DEVICE)
 
 # GPIO & potentiometer setup, Raspberry Pi only
-try:	
-	GPIO.setmode(GPIO.BCM)
-	# pin numbers for buttons/switches
-	vol = 16
-	lev = 23
-	but = 25
-	GPIO.setup(vol, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-	GPIO.setup(lev, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-	GPIO.setup(but, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-	spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI) # create the SPI bus
-	cs = digitalio.DigitalInOut(board.D22) # create the CS (chip select)
-	mcp = MCP.MCP3008(spi, cs) # create the MCP object
-	chan0 = AnalogIn(mcp, MCP.P0) # create an analog input channel on pin 0
-except:
-	logging.warning("IO not setup, probably not on RPi")
+#try:	
+GPIO.setmode(GPIO.BCM)
+# pin numbers for buttons/switches
+vol = 16
+lev = 23
+but = 25
+GPIO.setup(vol, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(lev, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(but, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI) # create the SPI bus
+cs = digitalio.DigitalInOut(board.D22) # create the CS (chip select)
+mcp = MCP.MCP3008(spi, cs) # create the MCP object
+chan0 = AnalogIn(mcp, MCP.P0) # create an analog input channel on pin 0
+#except:
+	#logging.warning("IO not setup, probably not on RPi")
 
 # ------------------------------------FUNCTIONS----------------------------------
 # list input devices, p = pyAudio instance
