@@ -56,6 +56,9 @@ MP3_FILENAME = "recording.mp3"
 
 # whisper configuration
 WHISPER_TEMP = 0
+
+# GPT configuration
+GPT_TEMP = 0.8
 	
 # set display variable (needed for FFPlay)
 os.system('export DISPLAY=:0.0')
@@ -330,7 +333,8 @@ if __name__ == '__main__':
 				messages=[
 				{"role": "system", "content": "You are the spymaster of the MI6. Mentor, teach, and support your spies through the spy walkie-talkie. Don't talk directly about who you are or your organization, be discreet but helpful, and be EXTREMELY EXTREMELY CONCISE, because your response will be read out loud."},
 				{"role": "user", "content": current_transcription}
-			  ]
+				],
+				temperature=GPT_TEMP
 			)
 			response = output.choices[0].message.content
 			logging.info("10. response obtained from MI6: " + str(response))
